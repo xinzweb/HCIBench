@@ -203,6 +203,7 @@ echo ""
 # ***********************************************
 echo -e "\e[33mInstalling RVC\e[0m"
 mv $DIR/rvc_rvc/rvc /usr/bin
+chmod +x /usr/bin/rvc
 echo ""
 
 #
