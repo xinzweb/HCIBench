@@ -33,7 +33,7 @@ echo -e "\e[33mChecking required commands\e[0m"
 if ( (check_command $CMD_GEM) ||
      (check_command $CMD_PYTHON) ||
      (check_command $CMD_PYTHON_PIP) ||
-     (check_command $CMD_TAR); then
+     (check_command $CMD_TAR) ); then
   exit 1
 fi
 echo "All required commands available"
@@ -235,6 +235,7 @@ mv -f $DIR/rvc_rvc/lib/rvc/modules/vsantest/packages/graphites /opt/output/vm-te
 for subdir in 'conf' 'vdbench-param-files' 'fio-param-files' 'tmp' 'logs'
 do
   if [ -d /tmp/${subdir} ]; then
+    mkdir -p /opt/automation/$subdir
     mv -f /tmp/${subdir}/* /opt/automation/$subdir/
   fi
 done
@@ -315,6 +316,8 @@ for i in /opt/automation/conf/grafana/data_sources/*; do \
      --data-binary @$i
 done
 echo ""
+
+rm -rf $DIR
 
 #
 # Done
