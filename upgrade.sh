@@ -63,32 +63,31 @@ CLEANUP_FILES=('.git' '.gitignore' '.DS_Store')
 #       the expected GA branch and prompt whether to continue
 #       with the install if it is not.
 #
-echo -e "\e[33mDetermining GIT Branch\e[0m"
-if !([ -x "$(command -v $CMD_GIT)" ]); then
-  echo 'Git not installed. Skipping.'
-else
-  echo 'Determining GIT Branch'
-  GIT_CUR_BRANCH=`$CMD_GIT branch | grep "\*" | cut -c3-`
-  echo -e "\e[32mGit Branch is: $GIT_CUR_BRANCH\e[0m"
-  if ([ "$GIT_CUR_BRANCH" != "$GIT_HCIB_BRANCH" ]); then
-    echo -e "\e[33mCurrent GIT branch does not match expected GA Branch:t config --global user.name "Your Name" $GIT_HCIB_BRANCH\e[0m"
-    echo 'Continue with the install?'
-    select yn in Yes No
-    do
-      case $yn in
-        Yes)
-          break
-          ;;
-        No)
-          echo 'Aborting'
-          exit
-          ;;
-      esac
-    done
-  fi
-fi
 
-echo ""
+#echo -e "\e[33mDetermining GIT Branch\e[0m"
+#if !([ -x "$(command -v $CMD_GIT)" ]); then
+#  echo 'Git not installed. Skipping.'
+#else
+#  echo 'Determining GIT Branch'
+#  GIT_CUR_BRANCH=`$CMD_GIT branch | grep "\*" | cut -c3-`
+#  echo -e "\e[32mGit Branch is: $GIT_CUR_BRANCH\e[0m"
+#  if ([ "$GIT_CUR_BRANCH" != "$GIT_HCIB_BRANCH" ]); then
+#    echo -e "\e[33mCurrent GIT branch does not match expected GA Branch:t config --global user.name "Your Name" $GIT_HCIB_BRANCH\e[0m"
+#    echo 'Continue with the install?'
+#    select yn in Yes No
+#    do
+#      case $yn in
+#        Yes)
+#          break
+#          ;;
+#        No)
+#          echo 'Aborting'
+#          exit
+#          ;;
+#      esac
+#    done
+#  fi
+#fi
 
 # SCM VERSION
 # ***********************************************
@@ -104,22 +103,21 @@ echo ""
 # Ref. https://pypi.org/project/setuptools-scm/
 #
 
-echo -e "\e[33mDetermining SCM version\e[0m"
-
-if !([ -x "$(command -v $CMD_PYTHON)" ] && [ -x "$(command -v $CMD_PYTHON_PIP)" ]); then
-   echo -e "\e[31mpython and/or pip are not installed: Cannot automatically determine the SCM version\e[0m"
-   echo -e "\e[31mSCM version is: $BUILD_VERSION\e[0m"
-else
-   echo 'Checking requirements'
-   $CMD_PYTHON_PIP install --no-cache-dir --upgrade pip
-   $CMD_PYTHON_PIP install --no-cache-dir --upgrade setuptools
-   $CMD_PYTHON_PIP install --no-cache-dir  setuptools_scm
-   BUILD_VERSION=`$CMD_PYTHON -c "from setuptools_scm import get_version;print(get_version(root='.', fallback_version='0.0'))"`
-   echo -e "\e[32mSCM version is: $BUILD_VERSION\e[0m"
-fi
-echo "Build information file: $BUILD_INFO_FILE"
-echo -e "build:\n  scm_version: '${BUILD_VERSION}'\n  date: '${BUILD_DATE}'" > $BUILD_INFO_FILE
-echo ""
+#echo -e "\e[33mDetermining SCM version\e[0m"
+#if !([ -x "$(command -v $CMD_PYTHON)" ] && [ -x "$(command -v $CMD_PYTHON_PIP)" ]); then
+#   echo -e "\e[31mpython and/or pip are not installed: Cannot automatically determine the SCM version\e[0m"
+#   echo -e "\e[31mSCM version is: $BUILD_VERSION\e[0m"
+#else
+#   echo 'Checking requirements'
+#   $CMD_PYTHON_PIP install --no-cache-dir --upgrade pip
+#   $CMD_PYTHON_PIP install --no-cache-dir --upgrade setuptools
+#   $CMD_PYTHON_PIP install --no-cache-dir  setuptools_scm
+#   BUILD_VERSION=`$CMD_PYTHON -c "from setuptools_scm import get_version;print(get_version(root='.', fallback_version='0.0'))"`
+#   echo -e "\e[32mSCM version is: $BUILD_VERSION\e[0m"
+#fi
+#echo "Build information file: $BUILD_INFO_FILE"
+#echo -e "build:\n  scm_version: '${BUILD_VERSION}'\n  date: '${BUILD_DATE}'" > $BUILD_INFO_FILE
+#echo ""
 
 #
 # BACKUP
@@ -185,6 +183,7 @@ pushd "$FIOCONFIG_TMP" &> /dev/null
   rm -rf $FIOCONFIG_SRC
   echo -e "\e[32mFioconfig installed\e[0m"
 popd &> /dev/null
+rm -rf "$INSTALLATION_FOLDER"
 echo ""
 
 #
@@ -210,14 +209,12 @@ echo ""
 # TOMCAT
 # ***********************************************
 echo -e "\e[33mReplacing tomcat file...\e[0m"
-
 echo 'Stopping Tomcat'
 service tomcat stop
 echo 'Removing old web app'
 rm -rf /var/opt/apache-tomcat-8.5.4/webapps/VMtest*
 echo 'Copying new web app'
 mv "$PACKAGES/vmtest/VMtest.war" /var/opt/apache-tomcat-8.5.4/webapps/VMtest.war
-
 echo 'Starting Tomcat'
 # Tomcat service needs to be started then restarted...
 service tomcat start
@@ -270,7 +267,6 @@ echo ""
 # CLEANUP
 # ***********************************************
 echo -e "\e[33mRemoving unecessary files\e[0m"
-
 for folder in "${CLEANUP_FOLDERS[@]}"
 do
    if ! [ -d $folder ]; then
@@ -287,38 +283,40 @@ echo "Removing git repository"
 rm -rf "/opt/vmware/rvc/.git"
 echo ""
 
-
 # START SERVICES
 # **********************************************
 echo -e "\e[33mStarting services...\e[0m"
 echo 'Start Docker'
 systemctl start docker
-echo -e "\e[33mUpdating containers...\e[0m"
-docker stop $(docker ps -aq)
-docker rm $(docker ps -aq)
-docker rmi $(docker images -q)
-docker image prune -f
-docker container prune -f
-docker volume prune -f
-docker network prune -f
-docker system prune -f
-docker system prune --volumes -f
-docker run -d --name graphite --restart=always -p 8020:80 -p 8021:8080 -p 2003-2004:2003-2004 -p 2023-2024:2023-2024 -p 8125:8125/udp -p 8126:8126 graphiteapp/graphite-statsd:1.1.5-10
-docker run -d --name grafana --restart always -p 3000:3000 -v /opt/automation/conf/grafana/provisioning:/etc/grafana/provisioning -v /opt/automation/conf/grafana/dashboards:/var/lib/grafana/dashboards -e GF_SECURITY_ADMIN_USER=admin -e GF_SECURITY_ADMIN_PASSWORD=vmware -e GF_AUTH_ANONYMOUS_ENABLED=true -u root grafana/grafana:6.7.4
-docker run -d --name influxdb --restart always -p 8086:8086 influxdb:1.8.1-alpine
-docker run -d --name telegraf_vsan -v /opt/automation/conf:/etc/telegraf/:ro vsananalytics/telegraf-vsan:0.0.7
-docker stop telegraf_vsan
-tdnf install jq -y
-for i in /opt/automation/conf/grafana/data_sources/*; do \
-    curl -X "POST" "http://localhost:3000/api/datasources" \
-    -H "Content-Type: application/json" \
-     --user admin:vmware \
-     --data-binary @$i
-done
-echo ""
+
+# UPDATE CONTAINERS
+# **********************************************
+
+#echo -e "\e[33mUpdating containers...\e[0m"
+#docker stop $(docker ps -aq)
+#docker rm $(docker ps -aq)
+#docker rmi $(docker images -q)
+#docker image prune -f
+#docker container prune -f
+#docker volume prune -f
+#docker network prune -f
+#docker system prune -f
+#docker system prune --volumes -f
+#docker run -d --name graphite --restart=always -p 8020:80 -p 8021:8080 -p 2003-2004:2003-2004 -p 2023-2024:2023-2024 -p 8125:8125/udp -p 8126:8126 graphiteapp/graphite-statsd:1.1.5-10
+#docker run -d --name grafana --restart always -p 3000:3000 -v /opt/automation/conf/grafana/provisioning:/etc/grafana/provisioning -v /opt/automation/conf/grafana/dashboards:/var/lib/grafana/dashboards -e GF_SECURITY_ADMIN_USER=admin -e GF_SECURITY_ADMIN_PASSWORD=vmware -e GF_AUTH_ANONYMOUS_ENABLED=true -u root grafana/grafana:6.7.4
+#docker run -d --name influxdb --restart always -p 8086:8086 influxdb:1.8.1-alpine
+#docker run -d --name telegraf_vsan -v /opt/automation/conf:/etc/telegraf/:ro vsananalytics/telegraf-vsan:0.0.7
+#docker stop telegraf_vsan
+#tdnf install jq -y
+#for i in /opt/automation/conf/grafana/data_sources/*; do \
+#    curl -X "POST" "http://localhost:3000/api/datasources" \
+#    -H "Content-Type: application/json" \
+#     --user admin:vmware \
+#     --data-binary @$i
+#done
+#echo ""
 
 rm -rf $DIR
-
 #
 # Done
 # ***********************************************
