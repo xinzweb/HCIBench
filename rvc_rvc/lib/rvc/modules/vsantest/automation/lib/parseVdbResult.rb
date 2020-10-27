@@ -121,4 +121,6 @@ else
   puts "CPU USAGE\t= #{cpu_usage.to_s}", resfile
   puts "RAM USAGE\t= #{ram_usage.to_s}", resfile
   puts "vSAN PCPU USAGE\t= #{vsan_pcpu_usage.to_s}", resfile if vsan_pcpu_usage != ""
+  hcibench_version = `cat /etc/hcibench_version`.chomp
+  `cd "#{dir}"; cp -r #{$log_path} "#{dir}"/; tar zcfP HCIBench-#{hcibench_version}-logs.tar.gz -C logs .; rm -rf logs`
 end

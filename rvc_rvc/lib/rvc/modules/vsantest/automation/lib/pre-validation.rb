@@ -259,7 +259,7 @@ def validate_vsan_info
   @vsan_datastores = _get_vsandatastore_in_cluster
   vsan_datastore_names = @vsan_datastores.keys & $datastore_names
   if vsan_datastore_names != []
-    puts "vSAN is Enabled in Cluster #{$cluster_name}, the vSAN Datastore for test is #{vsan_datastore_names}"
+    puts "vSAN is Enabled in Cluster #{$cluster_name}, the vSAN Datastore for test is #{vsan_datastore_names.join(', ')}"
   else
     err_msg "Can't find any vSAN Datastores for test"
   end
@@ -297,28 +297,28 @@ def validate_vsan_info
       warning_msg "Please turn on vSAN Performance Service for cluster #{$cluster_name} in order to monitor vSAN while testing is running" if (not ps_enabled) and (not $vsan_debug)
     end
     puts "vSAN #{local} Datastore name is #{vsan_datastore_name}, capacity is #{vsan_capacity} GB and freespace is #{vsan_freespace} GB, the default policy is #{vsan_default_policy_name}"
-  end
-
-  if $storage_policy and not $storage_policy.empty? and not $storage_policy.strip.empty?
-    puts "Validating storage policy #{$storage_policy}..."
-    compliant_ids = _get_compliant_datastore_ids_escape($storage_policy)
-    err_msg "Unable to find the storage policy #{$storage_policy} or Unable to find compliant datastores of policy #{$storage_policy}" if compliant_ids == []
-    err_msg "The storage policy #{$storage_policy} is not compatible with any of the datastores specified." if (@ds_ids & compliant_ids) == []
-    rules = _get_storage_policy_rules($storage_policy)
-    rules.each do |rule|
-      rule = rule.delete(' ')
-      @policy_rule_map[rule.split(":").first] = rule.split(":").last if not rule.include? "Rule-Set"
+  
+    if $storage_policy and not $storage_policy.empty? and not $storage_policy.strip.empty?
+      puts "Validating storage policy #{$storage_policy}..."
+      compliant_ids = _get_compliant_datastore_ids_escape($storage_policy)
+      err_msg "Unable to find the storage policy #{$storage_policy} or Unable to find compliant datastores of policy #{$storage_policy}" if compliant_ids == []
+      err_msg "The storage policy #{$storage_policy} is not compatible with any of the datastores specified." if (@ds_ids & compliant_ids) == []
+      rules = _get_storage_policy_rules($storage_policy)
+      rules.each do |rule|
+        rule = rule.delete(' ')
+        @policy_rule_map[rule.split(":").first] = rule.split(":").last if not rule.include? "Rule-Set"
+      end
+      policy_pftt = @policy_rule_map["VSAN.hostFailuresToTolerate"] || "1"
+      policy_sftt = @policy_rule_map["VSAN.subFailuresToTolerate"] || "0"
+      policy_ftm = @policy_rule_map["VSAN.replicaPreference"] || "RAID-1 (Mirroring) - Performance"
+      if policy_ftm.include? "RAID-1"
+        rep_factor = policy_pftt.to_i + 1 
+      else
+        rep_factor = 1.33 if policy_pftt.to_i == 1
+        rep_factor = 1.66 if policy_pftt.to_i == 2
+      end
+      @vsan_ds_rep_factor[vsan_datastore_name] = rep_factor * ( policy_sftt.to_i + 1 )
     end
-    policy_pftt = @policy_rule_map["VSAN.hostFailuresToTolerate"] || "1"
-    policy_sftt = @policy_rule_map["VSAN.subFailuresToTolerate"] || "0"
-    policy_ftm = @policy_rule_map["VSAN.replicaPreference"] || "RAID-1 (Mirroring) - Performance"
-    if policy_ftm.include? "RAID-1"
-      rep_factor = policy_pftt.to_i + 1 
-    else
-      rep_factor = 1.33 if policy_pftt.to_i == 1
-      rep_factor = 1.66 if policy_pftt.to_i == 2
-    end
-    @vsan_ds_rep_factor[vsan_datastore_name] = rep_factor * ( policy_sftt.to_i + 1 )
   end
 end
 
