@@ -851,7 +851,7 @@ opts :get_host_spare_compute_resource do
 end
 
 def get_host_spare_compute_resource host
-  cpu_cores = host.hardware.cpuInfo.numCpuCores
+  cpu_cores = host.hardware.cpuInfo.numCpuThreads
   ram_size = host.hardware.memorySize.to_f/(1024*1024)
   cpu_cores_used = 0
   ram_size_used = 0
