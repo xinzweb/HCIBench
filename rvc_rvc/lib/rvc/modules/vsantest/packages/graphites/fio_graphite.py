@@ -100,7 +100,6 @@ try:
 	gService = graphitesend.init(graphite_server=CARBON_HOST,graphite_port=CARBON_PORT,prefix=METRIC_PREFIX)
 except Exception as e:
 	print "Failed to initiate connection to graphite server:%s on port:%s",(CARBON_HOST,CARBON_PORT)
-	exit(1)
 
 try:
 	file = open(sys.argv[1])
