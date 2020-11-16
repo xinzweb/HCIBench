@@ -565,8 +565,12 @@ end
 def _get_vsan_type(cluster_name = $cluster_name)
   cl_path, cl_path_escape = _get_cl_path(cluster_name)
   vsan_type = `rvc #{$vc_rvc} --path #{cl_path_escape} -c 'vsantest.vsan_hcibench.vsan_type .' -c 'exit' -q`.chomp.split("\n")
-  dd_scope = vsan_type[0].split(" ")[1]
-  type = vsan_type[1].split(" ")[1]
+  dd_scope = "0"
+  type = "Hybrid"
+  if vsan_type.size == 2
+    dd_scope = vsan_type[0].split(" ")[1]
+    type = vsan_type[1].split(" ")[1]
+  end
   return dd_scope,type
 end
 
