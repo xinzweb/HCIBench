@@ -290,6 +290,13 @@ echo -e "\e[33mStarting services...\e[0m"
 echo 'Start Docker'
 systemctl start docker
 
+
+# UPDATE GOVC
+# **********************************************
+rm -rf /usr/local/bin/govc
+mv $DIR/pkgs/govc /usr/local/bin
+
+
 # UPDATE CONTAINERS
 # **********************************************
 
