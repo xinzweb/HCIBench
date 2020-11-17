@@ -295,6 +295,7 @@ systemctl start docker
 # **********************************************
 rm -rf /usr/local/bin/govc
 mv $DIR/pkgs/govc /usr/local/bin
+chmod +x /usr/local/bin/govc
 
 
 # UPDATE CONTAINERS
