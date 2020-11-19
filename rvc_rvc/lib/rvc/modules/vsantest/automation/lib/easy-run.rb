@@ -130,9 +130,10 @@ vm_deployed_size = total_cache_size * ratio / ftt
 @vm_num = num_of_dg * 2 * $total_datastore
 @data_disk_num = 8 #num_of_cap * 2 / vm_num
 
-if @vm_num % host_num != 0
-  @vm_num += (host_num - @vm_num % host_num)
-end
+# need to have the same num of ip
+#if @vm_num % host_num != 0
+#  @vm_num += (host_num - @vm_num % host_num)
+#end
 
 thread_num = 32 / @data_disk_num
 @disk_size = [(vm_deployed_size / (@vm_num / $total_datastore * @data_disk_num)).floor,1].max
