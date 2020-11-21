@@ -985,7 +985,8 @@ def find_vsan_datastore cluster,
   datastores = {}
   cluster.datastore.each do |x|
     if x.class.to_s == "Datastore" and x.summary.type == "vsan" 
-      ds_container_id = x.info.containerId.delete('-')
+      container_id = x.info.url.split("/")[-1].split(":")[1]
+      ds_container_id = container_id.delete('-')
       datastores[x.name] = {"capacity"=>((x.summary.capacity).to_i/(1024*1024*1024)).to_s,"freeSpace"=>((x.summary.freeSpace).to_i/(1024*1024*1024)).to_s,"local"=>(ds_container_id == cluster_id)}
     end
   end
@@ -1025,7 +1026,8 @@ opts :get_vsan_owner_cluster_from_datastore do
 end
 
 def get_vsan_owner_cluster_from_datastore datastore
-  ds_container_id = datastore.info.containerId.delete('-')
+  container_id = datastore.info.url.split("/")[-1].split(":")[1]
+  ds_container_id = container_id.delete('-')
   hosts_list = datastore.host
   hosts_list.each do |host|
     cluster_uuid = host.key.parent.configurationEx.vsanConfigInfo.defaultConfig.uuid.delete('-')
@@ -1053,7 +1055,8 @@ opts :get_vsan_datastore_container_id do
 end
 
 def get_vsan_datastore_container_id datastore
-  datastore_container_id = datastore.info.containerId.delete('-')
+  container_id = datastore.info.url.split("/")[-1].split(":")[1]
+  datastore_container_id = container_id.delete('-')
   puts datastore_container_id
   return datastore_container_id
 end
@@ -2294,4 +2297,3 @@ def run_observer vcip, path, name
     runAnalyzer(tracefile)
   end
 end
-
