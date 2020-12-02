@@ -297,6 +297,14 @@ rm -rf /usr/local/bin/govc
 mv $DIR/pkgs/govc /usr/local/bin
 chmod +x /usr/local/bin/govc
 
+# UPDATE REPOS
+# ***********************************************
+
+rm -rf /etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
+mv $DIR/repo/VMWARE-RPM-GPG-KEY /etc/pki/rpm-gpg/
+
+rm -rf /etc/yum.repos.d/*.repo
+mv $DIR/repo/*.repo /etc/yum.repos.d/
 
 # UPDATE CONTAINERS
 # **********************************************
