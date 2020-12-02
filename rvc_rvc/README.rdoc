@@ -1,3 +1,0 @@
-1. download HCIBench 2.0+
-2. unzip the repo to the /root/rvc_rvc
-3. run /root/rvc_rvc/install.sh to have all the rvc and hcibench code up to date
