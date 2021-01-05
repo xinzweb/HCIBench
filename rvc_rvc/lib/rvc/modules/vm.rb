@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+require "ipaddress"
 require 'rvc/vim'
 require 'rbvmomi/pbm'
 VIM::Datastore
@@ -747,15 +747,41 @@ end
 
 def vm_ip vm
   summary = vm.summary
-
+  ips = []
+  ip_to_show = nil
   err "VM is not powered on" unless summary.runtime.powerState == 'poweredOn'
+  nics = vm.guest.net
+  nics.each do |nic|
+    nic.ipAddress.each do |nic_ip|
+      if IPAddress.valid_ipv4? nic_ip
+	ip_to_show = nic_ip
+	break
+      else
+        ips << nic_ip
+      end
+    end
+    break if not ip_to_show
+  end
 
-  ip = if summary.guest.ipAddress and summary.guest.ipAddress != '127.0.0.1'
-    summary.guest.ipAddress
-  elsif note = YAML.load(summary.config.annotation) and note.is_a? Hash and note['ip']
-    note['ip']
+  if not ip_to_show
+    ips.each do |ipv6|
+      if ipv6[0..3] != "fe80"
+        ip_to_show = ipv6
+	break
+      end
+    end
+  end
+
+  if ip_to_show
+    ip = ip_to_show
   else
-    err "no IP known for this VM"
+    ip = if summary.guest.ipAddress and summary.guest.ipAddress != '127.0.0.1'
+      summary.guest.ipAddress
+    elsif note = YAML.load(summary.config.annotation) and note.is_a? Hash and note['ip']
+      note['ip']
+    else
+      err "no IP known for this VM"
+    end
   end
 end
 

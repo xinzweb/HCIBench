@@ -37,7 +37,11 @@ def run_cmd(host)
   `sed -i '/#{host} /d' /root/.ssh/known_hosts`
   if ssh_valid(host, $host_username, $host_password)
     puts "Uploading VM Support manifest to #{host}",@collect_support_bundle_log
-    scp_item(host,$host_username,$host_password, @vm_support_manifest_script,"/etc/vmware/vm-support")
+    if not scp_item(host,$host_username,$host_password, @vm_support_manifest_script,"/etc/vmware/vm-support")
+      puts "Unable to upload #{@vm_support_manifest_script} to #{host}:/etc/vmware/vm-support"
+      @failure = true
+      return 
+    end
 
     puts "Downloading bundle from #{host}...", @collect_support_bundle_log
     `wget --output-document "#{@dest_folder}/#{host}-vm-support-bundle.tgz" --no-check-certificate --user '#{$host_username}' --password '#{$host_password}' https://#{host}/cgi-bin/vm-support.cgi?manifests=Storage:VSANPerfHcibench%20Storage:VSANMinimal`

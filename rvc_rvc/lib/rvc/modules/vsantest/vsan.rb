@@ -1918,11 +1918,13 @@ opts :device_add_disk do
   summary "Add a hard drive to a virtual machine"
   arg :vm, nil, :lookup => VIM::VirtualMachine
   arg :path, "Filename on the datastore", :lookup_parent => VIM::Datastore::FakeDatastoreFolder, :required => false
+  opt :path_string, "Filename on the datastore in string", :type => :string, :default => ""
   opt :size, 'Size', :default => '10Gi'
   opt :controller, 'Virtual controller', :type => :string, :lookup => VIM::VirtualController
   opt :file_op, 'File operation (create|reuse|replace)', :default => 'create'
   opt :no_thin, 'Use thick provisioning', :type => :boolean
   opt :profile_id, "Storage Policy id", :type => :string
+  opt :multi_writer, ":sharingNone or :sharingMultiWriter", :type => :boolean, :default => false
 end
 
 def device_add_disk vm, path, opts
@@ -1935,8 +1937,10 @@ def device_add_disk vm, path, opts
   if path
     dir, file = *path
     filename = "#{dir.datastore_path}/#{file}"
-  else
+  elsif opts[:path_string] == ""
     filename = "#{File.dirname(vm.summary.config.vmPathName)}/#{id}.vmdk"
+  else
+    filename = opts[:path_string]
   end
 
   opts[:file_op] = nil if opts[:file_op] == 'reuse'
@@ -1953,6 +1957,15 @@ def device_add_disk vm, path, opts
               )]
   end
 
+  sharing = :sharingNone
+  diskmode = :persistent  
+  eager = false
+  if opts[:multi_writer]
+    sharing = :sharingMultiWriter
+    diskmode = :independent_persistent
+    eager = true
+  end
+  
   spec = {
     :deviceChange => [
     {
@@ -1962,8 +1975,9 @@ def device_add_disk vm, path, opts
     :key => -1,
     :backing => VIM.VirtualDiskFlatVer2BackingInfo(
     :fileName => filename,
-    :diskMode => :persistent,
-    # :eagerlyScrub => true,
+    :sharing => sharing,
+    :diskMode => diskmode,
+    :eagerlyScrub => eager,
     :thinProvisioned => !(opts[:no_thin] == true)
     ),
     :capacityInKB => MetricNumber.parse(opts[:size]).to_i/1024,
@@ -1982,6 +1996,14 @@ def device_add_disk vm, path, opts
     if result == nil
       new_device = vm.collect('config.hardware.device')[0].grep(VIM::VirtualDisk).last
       puts "Added device #{new_device.name}"
+      if opts[:file_op] == 'create' and opts[:multi_writer] and $path_params
+	if $path_params.has_key? vm.name
+          $path_params[vm.name] << "#{new_device.backing.fileName}"
+	else
+	  $path_params[vm.name] = ["#{new_device.backing.fileName}"]
+	end
+      end
+    
     else
       err result.localizedMessage
     end

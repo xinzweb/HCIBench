@@ -2,6 +2,7 @@
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:83",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,11 +17,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "iteration": 1593547121094,
+  "iteration": 1608010345740,
   "links": [],
   "panels": [
     {
       "collapsed": false,
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -75,7 +77,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -97,8 +98,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aggregate(vdbench.$Testname.$Testcase.*.localhost.iorate, 'sum')",
-          "textEditor": true
+          "target": "aggregate(vdbench.$Testname.$Testcase.*.localhost.i_o_rate, 'sum')",
+          "textEditor": false
         }
       ],
       "thresholds": "",
@@ -152,7 +153,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -174,8 +174,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aggregate(scale(scale(vdbench.$Testname.$Testcase.*.localhost.MBsec, 1024), 1024), 'sum')",
-          "textEditor": true
+          "target": "aggregate(scale(scale(vdbench.$Testname.$Testcase.*.localhost.MB_sec_1024**2, 1024), 1024), 'sum')",
+          "textEditor": false
         }
       ],
       "thresholds": "",
@@ -228,7 +228,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -250,8 +249,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.resptime)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.resp_time)",
+          "textEditor": false
         }
       ],
       "thresholds": "5,10",
@@ -305,7 +304,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -327,8 +325,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.respstddev)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.resp_stddev)",
+          "textEditor": false
         }
       ],
       "thresholds": "5,10",
@@ -382,7 +380,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -404,8 +401,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.readresp)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.read_resp)",
+          "textEditor": false
         }
       ],
       "thresholds": "5,10",
@@ -459,7 +456,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -481,8 +477,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.writeresp)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.write_resp)",
+          "textEditor": false
         }
       ],
       "thresholds": "5,10",
@@ -502,6 +498,7 @@
         "rgba(50, 172, 45, 0.97)"
       ],
       "datasource": "Graphite",
+      "decimals": 0,
       "editable": true,
       "error": false,
       "format": "bytes",
@@ -524,10 +521,12 @@
       "mappingType": 1,
       "mappingTypes": [
         {
+          "$$hashKey": "object:572",
           "name": "value to text",
           "value": 1
         },
         {
+          "$$hashKey": "object:573",
           "name": "range to text",
           "value": 2
         }
@@ -535,7 +534,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -557,8 +555,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.bytesio)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.bytes_i_o)",
+          "textEditor": false
         }
       ],
       "thresholds": "",
@@ -613,7 +611,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -635,8 +632,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "countSeries(vdbench.$Testname.$Testcase.*.localhost.interval, vdbench.*)",
-          "textEditor": true
+          "target": "countSeries(vdbench.$Testname.$Testcase.*.localhost.bytes_i_o, vdbench.*)",
+          "textEditor": false
         }
       ],
       "thresholds": "",
@@ -692,7 +689,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -714,8 +710,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aggregate(vdbench.$Testname.$Testcase.*.localhost.queuedepth, 'sum')",
-          "textEditor": true
+          "target": "aggregate(vdbench.$Testname.$Testcase.*.localhost.queue_depth, 'sum')",
+          "textEditor": false
         }
       ],
       "thresholds": "",
@@ -744,35 +740,41 @@
             "mean"
           ],
           "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
             "decimals": null,
             "mappings": [],
             "max": 100,
             "min": 0,
-            "thresholds": [
-              {
-                "color": "#7EB26D",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 100
-              }
-            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "#7EB26D",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 100
+                }
+              ]
+            },
             "unit": "none"
           },
-          "override": {},
+          "overrides": [],
           "values": false
         },
         "orientation": "auto",
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "6.3.5",
+      "pluginVersion": "6.7.4",
       "targets": [
         {
           "refId": "A",
-          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.readpct)",
-          "textEditor": true
+          "target": "avg(vdbench.$Testname.$Testcase.*.localhost.read_pct)",
+          "textEditor": false
         }
       ],
       "title": "Read Ratio",
@@ -824,7 +826,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -846,8 +847,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "nPercentile(avg(vdbench.$Testname.$Testcase.*.localhost.readresp), 95)",
-          "textEditor": true
+          "target": "nPercentile(avg(vdbench.$Testname.$Testcase.*.localhost.read_resp), 95)",
+          "textEditor": false
         }
       ],
       "thresholds": "5,10",
@@ -905,7 +906,6 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
-      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -927,8 +927,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "nPercentile(avg(vdbench.$Testname.$Testcase.*.localhost.writeresp), 95)",
-          "textEditor": true
+          "target": "nPercentile(avg(vdbench.$Testname.$Testcase.*.localhost.write_resp), 95)",
+          "textEditor": false
         }
       ],
       "thresholds": "10,20",
@@ -942,6 +942,7 @@
     },
     {
       "collapsed": false,
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -971,6 +972,7 @@
         "x": 0,
         "y": 8
       },
+      "hiddenSeries": false,
       "id": 5,
       "legend": {
         "alignAsTable": true,
@@ -1002,8 +1004,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.iorate, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.i_o_rate, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [],
@@ -1064,6 +1066,7 @@
         "x": 12,
         "y": 8
       },
+      "hiddenSeries": false,
       "id": 7,
       "legend": {
         "alignAsTable": true,
@@ -1096,8 +1099,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.MBsec, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.MB_sec_1024**2, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [],
@@ -1158,6 +1161,7 @@
         "x": 0,
         "y": 15
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "alignAsTable": true,
@@ -1197,8 +1201,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.readresp, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.read_resp, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [
@@ -1279,6 +1283,7 @@
         "x": 12,
         "y": 15
       },
+      "hiddenSeries": false,
       "id": 11,
       "legend": {
         "alignAsTable": true,
@@ -1317,8 +1322,8 @@
         {
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.writeresp, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.write_resp, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [],
@@ -1381,6 +1386,7 @@
         "x": 0,
         "y": 22
       },
+      "hiddenSeries": false,
       "id": 22,
       "legend": {
         "alignAsTable": false,
@@ -1417,8 +1423,8 @@
       "targets": [
         {
           "refId": "A",
-          "target": "aliasByNode(nPercentile(vdbench.$Testname.$Testcase.*.localhost.readresp, 95), 3)",
-          "textEditor": true
+          "target": "aliasByNode(nPercentile(vdbench.$Testname.$Testcase.*.localhost.read_resp, 95), 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [
@@ -1499,6 +1505,7 @@
         "x": 12,
         "y": 22
       },
+      "hiddenSeries": false,
       "id": 9,
       "legend": {
         "alignAsTable": false,
@@ -1538,7 +1545,7 @@
         {
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(nPercentile(vdbench.$Testname.$Testcase.*.localhost.writeresp, 95), 3)",
+          "target": "aliasByNode(nPercentile(vdbench.$Testname.$Testcase.*.localhost.write_resp, 95), 3)",
           "textEditor": false
         }
       ],
@@ -1600,6 +1607,7 @@
         "x": 0,
         "y": 29
       },
+      "hiddenSeries": false,
       "id": 21,
       "legend": {
         "alignAsTable": true,
@@ -1633,8 +1641,8 @@
         {
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.queuedepth, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.queue_depth, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [],
@@ -1695,6 +1703,7 @@
         "x": 12,
         "y": 29
       },
+      "hiddenSeries": false,
       "id": 20,
       "legend": {
         "alignAsTable": true,
@@ -1733,8 +1742,8 @@
         {
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.respstddev, 3)",
-          "textEditor": true
+          "target": "aliasByNode(vdbench.$Testname.$Testcase.*.localhost.resp_stddev, 3)",
+          "textEditor": false
         }
       ],
       "thresholds": [],
@@ -1779,8 +1788,8 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 19,
+  "refresh": "10s",
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [
     "vdbench"
@@ -1790,13 +1799,14 @@
       {
         "allValue": null,
         "current": {
-          "text": "results20200630124031",
-          "value": "results20200630124031"
+          "text": "easy-run-1607904697",
+          "value": "easy-run-1607904697"
         },
         "datasource": "Graphite",
         "definition": "vdbench.*",
         "hide": 0,
         "includeAll": false,
+        "index": -1,
         "label": null,
         "multi": false,
         "name": "Testname",
@@ -1815,13 +1825,14 @@
       {
         "allValue": null,
         "current": {
-          "text": "vdb-8vmdk-30ws-128k-70rdpct-50randompct-2threads-1593546803",
-          "value": "vdb-8vmdk-30ws-128k-70rdpct-50randompct-2threads-1593546803"
+          "text": "vdb-8vmdk-100ws-4k-70rdpct-100randompct-2threads-1608008933",
+          "value": "vdb-8vmdk-100ws-4k-70rdpct-100randompct-2threads-1608008933"
         },
         "datasource": "Graphite",
         "definition": "vdbench.$Testname.*",
         "hide": 0,
         "includeAll": false,
+        "index": -1,
         "label": null,
         "multi": false,
         "name": "Testcase",
@@ -1840,7 +1851,7 @@
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -1877,5 +1888,8 @@
   "timezone": "browser",
   "title": "HCIBench Vdbench Monitoring",
   "uid": "vdbench",
-  "version": 4
+  "variables": {
+    "list": []
+  },
+  "version": 1
 }

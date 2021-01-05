@@ -26,8 +26,32 @@ class VIM::VirtualMachine
     return num
   end
 
-  def ipAddress;
-    @ipAddress ||= self.guest.ipAddress
+  def ipAddress
+    ips = []
+    ip_to_show = nil
+    nics = self.guest.net
+    nics.each do |nic|
+      nic.ipAddress.each do |nic_ip|
+        if IPAddress.valid_ipv4? nic_ip
+          ip_to_show = nic_ip
+          break
+        else
+          ips << nic_ip
+        end
+      end
+      break if ip_to_show
+    end
+
+    if not ip_to_show
+      ips.each do |ipv6|
+        if ipv6[0..3] != "fe80"
+          ip_to_show = ipv6
+          break
+        end
+      end
+    end
+
+    @ipAddress ||= ip_to_show #self.guest.ipAddress
   end
 
   def ssh;
@@ -36,7 +60,8 @@ class VIM::VirtualMachine
     :password => 'vdbench',
     :verify_host_key => :never,
     :keepalive => true,
-    :keepalive_interval => 60
+    :keepalive_interval => 60,
+    :timeout => 60
     ) do |ssh|
       yield ssh
     end
@@ -92,15 +117,16 @@ class VIM::VirtualMachine
       duration_var_fio = "--runtime #{opts[:duration]}"
     end
     if opts[:tool] == "vdbench"
-        cmds = ["gip=`netstat -npt | grep 'sshd' | awk '{print $5}' | cut -d ':' -f1`; \
-          cd vdbench; nohup ./vdbench -f #{paramFileName} #{duration_var_vdb} > results.txt 2>&1 & \
-          nohup tail -f -n +1 /root/vdbench/results.txt | /root/graphites/vdbench_graphite.sh -h $gip -t '#{output_folder_name}.#{testcase_name}.#{vmname}' > graphite.log 2>&1 & \
-          sleep 1; sync; \
-          pid=`ps -e | grep vdbench_graphit | awk '{print $1}'`; \
-          while true; do if [ `ps -e | grep vdbench | grep -v graphit | wc -l` -gt 0 ]; then sleep 3; else kill -9 $pid; break; fi; done"]
+        cmds = [
+	  "gip=`netstat -nptW | grep 'sshd' | awk '{print $5}' | rev | cut -d ':' -f2- | rev`; \
+	  cd /root/vdbench; export CARBON_HOST=${gip}; \
+          export METRIC_PREFIX='vdbench.#{output_folder_name}.#{testcase_name}.#{vmname}'; \
+          nohup ./vdbench -f #{paramFileName} #{duration_var_vdb} > results.txt 2>&1 & \
+          python /root/graphites/vdbench_graphite.py /root/vdbench/results.txt > vdbench.graphite.log 2>&1"
+	]
     elsif opts[:tool] == "fio"
         cmds = [
-          "gip=`netstat -npt | grep 'sshd' | awk '{print $5}' | cut -d ':' -f1`; \
+          "gip=`netstat -nptW | grep 'sshd' | awk '{print $5}' | rev | cut -d ':' -f2- | rev`; \
           cd /root/fio; export CARBON_HOST=${gip}; \
           export METRIC_PREFIX='fio.#{output_folder_name}.#{testcase_name}.#{vmname}'; \
           > /root/fio/results.json;"
@@ -194,7 +220,7 @@ opts :install_scripts do
 end
 
 def install_scripts vms
-  vdb_graphite = "/opt/output/vm-template/graphites/vdbench_graphite.sh"
+  vdb_graphite = "/opt/output/vm-template/graphites/vdbench_graphite.py"
   fio_graphite = "/opt/output/vm-template/graphites/fio_graphite.py"
   vms.each do |x|
     puts "#{Time.now}: #{x.name}: uploading graphites scripts to #{x.name}"
@@ -272,42 +298,109 @@ opts :add_data_disk do
   opt :num, "Number of disks", :default => 10, :type => :integer
   opt :add_pvscsi, "If need to add pvscsi", :type => :boolean
   opt :profile_id, "Id of storage policy", :type => :string
+  opt :multi_writer, "whether do multi_writer", :default => false, :type => :boolean
 end
 
 def add_data_disk vms, opts
   profile_id = ""
-  if opts[:profile_id] and opts[:profile_id] != ""
-    profile_id = "-p #{opts[:profile_id]} "
-  end
+  profile_id = "-p #{opts[:profile_id]} " if opts[:profile_id] and opts[:profile_id] != ""
+  num_pvscsi = [(opts[:num].to_f/4).ceil,3].min
+  disk_num_pvs_more = 0
+  disk_num_pvs_less = 0
+  num_pvs_more = opts[:num] % num_pvscsi
+  num_pvs_less = num_pvscsi - num_pvs_more
+  disk_num_pvs_more = opts[:num] / num_pvscsi + 1 if num_pvs_more != 0 #disks distribution not even
+  disk_num_pvs_less = opts[:num] / num_pvscsi
 
-  vms.each do |x|
-    $shell.fs.marks['foo'] = [x];
-
-    if opts[:add_pvscsi]
-      puts "Adding SCSI Controller"
-      num_pvscsi = [(opts[:num].to_f/4).ceil,3].min
-      disk_num_pvs_more = 0
-      disk_num_pvs_less = 0
-      num_pvs_more = opts[:num] % num_pvscsi
-      num_pvs_less = num_pvscsi - num_pvs_more
-      if num_pvs_more != 0 #disks distribution not even
-        disk_num_pvs_more = opts[:num] / num_pvscsi + 1
-      end
-      disk_num_pvs_less = opts[:num] / num_pvscsi
-      disk_num_deploy = 0
-
+  if opts[:add_pvscsi]  
+    vms.each do |x|
+      $shell.fs.marks['foo'] = [x];
       for i in 1..num_pvscsi
         params = [
           "device.add_scsi_controller ",
           "-t pvscsi ",
-          "~foo"
-        ]
+          "~foo"]
         params.join(" ")
         $shell.eval_command(params.join(" "))
         sleep 1
       end
+    end
+  end
+
+  vm_disk_map = {}
+  num_vm_more_disk_create = opts[:num] % vms.size
+  num_vm_less_disk_create = vms.size - num_vm_more_disk_create
+  disk_num_create_more = 0
+  disk_num_create_more = opts[:num] / vms.size + 1 if num_vm_more_disk_create != 0
+  disk_num_create_less = opts[:num] / vms.size
+  vms.each_with_index do |vm,vm_index|
+    if vm_index < num_vm_more_disk_create
+      vm_disk_map[vm.name] = [disk_num_create_more]
+      vm_disk_map[vm.name] << opts[:num] - disk_num_create_more
+    else
+      vm_disk_map[vm.name] = [disk_num_create_less]
+      vm_disk_map[vm.name] << opts[:num] - disk_num_create_less
+    end
+  end
+  puts vm_disk_map if opts[:multi_writer]
+  if opts[:multi_writer]
+    $path_params = {}
+    vms.each do |vm|
+      stop_creating = false
+      $shell.fs.marks['foo'] = [vm]
+      disk_num = vm_disk_map[vm.name][0]
+      for i in 0...num_pvscsi
+        disk_num_deploy = disk_num_pvs_less
+        disk_num_deploy = disk_num_pvs_more if i < num_pvs_more
+        pvscsi = i + 1
+        for j in 0...disk_num_deploy
+	  if disk_num > 0
+            disk_num -= 1
+          else
+            stop_creating = true
+            break
+          end
+          params = [
+            "vsantest.vsan.device_add_disk",
+            "-s #{opts[:size_gb]}Gi",
+            "--controller ~foo/devices/pvscsi-100#{pvscsi}/",
+            "-f create",
+            "-m",
+            profile_id,
+            "~foo"
+          ] 
+          params << "--no-thin" #if opts[:no_thin]
+          params.join(" ")
+          $shell.eval_command(params.join(" "))
+          sleep 1
+        end
+        break if stop_creating
+      end
+    end
+  end
+
+  vms.each_with_index do |x,vm_index|
+    $shell.fs.marks['foo'] = [x];
+    if opts[:add_pvscsi]
+      existing_vmdk_num = 0
+      local_path_params = []
+      multi_writer_param = ""
+      reuse_param = "-f create"
+      if opts[:multi_writer]
+        multi_writer_param = "-m"
+        reuse_param = "-f reuse"
+        $path_params.keys.each do |vm_name|
+          if vm_name != x.name
+            local_path_params = local_path_params | $path_params[vm_name] 
+          else
+            existing_vmdk_num = $path_params[x.name].size
+          end
+        end
+      end      
+      disk_num_deploy = 0
 
       puts "Adding #{opts[:num]} disks"
+      path_param = ""
       for i in 0...num_pvscsi
         if i < num_pvs_more
           disk_num_deploy = disk_num_pvs_more
@@ -316,11 +409,22 @@ def add_data_disk vms, opts
         end
         pvscsi = i + 1
         for j in 0...disk_num_deploy
+	  if existing_vmdk_num > 0
+            existing_vmdk_num -= 1
+            next
+          end
+	  if opts[:multi_writer]
+             path_param = "-p '" + local_path_params.pop + "'"
+             puts path_param
+          end
           params = [
-          "vsantest.vsan.device_add_disk ",
+          "vsantest.vsan.device_add_disk",
           "-s #{opts[:size_gb]}Gi",
-          "--controller ~foo/devices/pvscsi-100#{pvscsi}/ ",
+          "--controller ~foo/devices/pvscsi-100#{pvscsi}/",
+	  reuse_param,
+	  multi_writer_param,
           profile_id,
+	  path_param,
           "~foo"
           ]
           if opts[:no_thin]
@@ -331,7 +435,6 @@ def add_data_disk vms, opts
           sleep 1
         end
       end
-
     else # post-adding-disks
       #get current num of disks
       $shell.eval_command("vsantest.mark_hcibench num ~foo/devices/disk*-100*")
@@ -473,7 +576,15 @@ def runObserver(vcip, path, opts, clusterpath);
   fork do
     Process.setpgrp()
     file_path = path + "/observer.json"
-    vc_rvc = Shellwords.escape("#{$vcusername}:#{$vcpassword}") + "@#{vcip}"
+
+
+if IPAddress.valid? vcip and IPAddress.valid_ipv6? vcip
+  vc_rvc = Shellwords.escape("#{$vcusername}:#{$vcpassword}") + "@[#{vcip}]" + " -a"
+else
+  vc_rvc = Shellwords.escape("#{$vcusername}:#{$vcpassword}") + "@#{vcip}" + " -a"
+end
+
+  #  vc_rvc = Shellwords.escape("#{$vcusername}:#{$vcpassword}") + "@#{vcip}"
     cl_path_escape = Shellwords.escape("#{clusterpath}")
     exec("rvc #{vc_rvc} --path #{cl_path_escape} -c 'vsantest.vsan_hcibench.observer . -m 1 -e \"#{path}\"' -c 'exit' ")
   end
@@ -951,7 +1062,7 @@ def get_vm_network vms
   vms.each do |vm|
     if vm.summary.runtime.powerState == "poweredOn"
       network = vm.network[0]
-      ip = vm.guest.ipAddress
+      ip = vm.ipAddress
       vm_net_map[vm.name] = {network._ref => ip}
     end
   end
@@ -1908,7 +2019,7 @@ def deploy_tvm cluster, opts
 
   if opts[:static]
     #for ACI Switch, will need guest ping the controller in order to activate the ip.
-    controller_ip = `ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`.chomp
+    controller_ip = `ip a show dev eth1 | grep global | awk {'print $2'} | cut -d "/" -f1`.chomp
     vms.each do |vm|
       hash = {"guestinfo.vlan_static"=>"true", "guestinfo.vlan_ip"=>opts[:ip], "guestinfo.vlan_size"=>opts[:ip_size].to_s, "guestinfo.controller_ip"=>controller_ip}
       cfg = {
@@ -1955,7 +2066,7 @@ def deploy_tvm cluster, opts
   end
   sleep(30)
   vms.each do |vm|
-    vm_ip = vm.summary.guest.ipAddress
+    vm_ip = vm.ipAddress
     `sed -i '/#{vm_ip} /d' /root/.ssh/known_hosts`
     time_retry = 0 
     while not system("ping -c 5 #{vm_ip}")
@@ -1995,13 +2106,13 @@ opts :deploy_test_vms do
   opt :ip, "starting ip addresses assigned to the vms", :type => :string, :multi => true
   opt :ip_size, "network size used by the vm", :type => :integer
   opt :storage_policy, "the name of policy", :type => :string
-  #TBD: change host into hosts: Done
   opt :host, "specify the host name/ip to deploy on and clone to itself", :type => :string, :multi => true
   opt :resource_pool, "specify the name of the resource pool in the cluster", :type => :string
   opt :vm_folder, "specify the root vm folder the vms will be deployed on initially", :type => :string
   opt :tool, "Specify the tool will be used for testing", :default => "vdbench", :type => :string
   opt :num_cpu, "number of CPU to configure per VM", :default => 4, :type => :integer
   opt :size_ram, "size of RAM to configure per VM in GB", :default => 8, :type => :integer
+  opt :multi_writer, "whether to deploy multi-writer disks", :default => false, :type => :boolean
 end
 
 def deploy_test_vms cluster, opts
@@ -2082,17 +2193,16 @@ def deploy_test_vms cluster, opts
           :defaultProfile => vmProfile
           )
           vm.UpgradeVM_Task
-	        $shell.fs.marks['vm_to_add_cpu'] = vm;
+	  $shell.fs.marks['vm_to_add_cpu'] = vm;
           $shell.eval_command("vm.modify_cpu -n #{cpu_num} ~vm_to_add_cpu")
           $shell.eval_command("vm.modify_memory -s #{ram_num} ~vm_to_add_cpu")
-	        add_data_disk([vm],
+	  add_data_disk([vm],
           :no_thin => opts[:no_thin],
           :size_gb => opts[:datadisk_size_gb],
           :num => opts[:datadisk_num],
           :add_pvscsi => true,
           :profile_id => opts[:storage_policy]? get_policy_id_by_name(vm,opts[:storage_policy]) : ""
-          )
-
+          ) if not opts[:multi_writer]
           vms << vm
         rescue Exception => ex
           pp [ex.class, ex.message]
@@ -2104,6 +2214,8 @@ def deploy_test_vms cluster, opts
     if opts[:host] and opts[:host] != []
       opts[:host].each do |host_name|
         hosts.each do |host|
+	  puts host.name
+	  puts host_name
           if host_name == host.name or host_name == IPSocket.getaddress(host.name)
             host_to_deploy << host
           end
@@ -2135,14 +2247,13 @@ def deploy_test_vms cluster, opts
         $shell.fs.marks['vm_to_add_cpu'] = vm;
         $shell.eval_command("vm.modify_cpu -n #{cpu_num} ~vm_to_add_cpu")
         $shell.eval_command("vm.modify_memory -s #{ram_num} ~vm_to_add_cpu")
-	      add_data_disk([vm],
+	add_data_disk([vm],
         :no_thin => opts[:no_thin],
         :size_gb => opts[:datadisk_size_gb],
         :num => opts[:datadisk_num],
         :add_pvscsi => true,
         :profile_id => opts[:storage_policy]? get_policy_id_by_name(vm,opts[:storage_policy]) : ""
-        )
-
+        ) if not opts[:multi_writer]
         vms << vm
         (1...opts[:num_vms]).each do |i|
           task = vm.CloneVM_Task(:folder => cluster_folder,
@@ -2167,6 +2278,14 @@ def deploy_test_vms cluster, opts
     end
   end
   vms = vms.compact
+  add_data_disk(vms,
+     :no_thin => opts[:no_thin],
+     :size_gb => opts[:datadisk_size_gb],
+     :num => opts[:datadisk_num],
+     :add_pvscsi => true,
+     :multi_writer => true,
+     :profile_id => opts[:storage_policy]? get_policy_id_by_name(vm,opts[:storage_policy]) : ""
+  ) if opts[:multi_writer]
 
   if opts[:create_only]
     return vms
@@ -2174,7 +2293,7 @@ def deploy_test_vms cluster, opts
 
   if opts[:static]
     #for ACI Switch, will need guest ping the controller in order to activate the ip.
-    controller_ip = `ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`.chomp
+    controller_ip = `ip a show dev eth1 | grep global | awk {'print $2'} | cut -d "/" -f1`.chomp
     vms.each_with_index do |vm, index|
       starting_ip = opts[:ip][index]
       hash = {"guestinfo.vlan_static"=>"true", "guestinfo.vlan_ip"=>starting_ip, "guestinfo.vlan_size"=>opts[:ip_size].to_s, "guestinfo.controller_ip"=>controller_ip}
@@ -2205,7 +2324,7 @@ def deploy_test_vms cluster, opts
   sleep(30)
   failure_list = []
   vms.each do |vm|
-    vm_ip = vm.summary.guest.ipAddress
+    vm_ip = vm.ipAddress
     time_retry = 1
     while not system("ping -c 5 #{vm_ip}")
       if time_retry == 3
@@ -2223,13 +2342,13 @@ def deploy_test_vms cluster, opts
   while not failure_list.empty?
     puts "Not able to ping VMs #{failure_list.map {|a| a.name}}, try another time..."
     if retry_ping == 15
-      puts "Can't Ping VMs #{failure_list.map {|a| a.name}} by their IPs #{failure_list.map {|a| a.summary.guest.ipAddress}}"
+      puts "Can't Ping VMs #{failure_list.map {|a| a.name}} by their IPs #{failure_list.map {|a| a.ipAddress}}"
       exit(254)
     end
     sleep(60)
     success_list = []
     failure_list.each do |vm|
-      vm_ip = vm.summary.guest.ipAddress
+      vm_ip = vm.ipAddress
       if system("ping -c 5 #{vm_ip}")
         success_list << vm
       end

@@ -110,15 +110,17 @@ if !$reuse_vm or !system("ruby #{$healthfile}")
     rescue Timeout::Error => e
       failure_handler "IP Assignment"
     end
-
-    actual_vm_num = `rvc #{$vc_rvc} --path #{@folder_path_escape} -c "vsantest.perf.get_vm_count #{$vm_prefix}-*" -c 'exit' -q`.chomp.to_i
-    if ($vm_num != actual_vm_num) or (`rvc #{$vc_rvc} --path #{@folder_path_escape} -c "ls" -c 'exit' -q`.encode('UTF-8', :invalid => :replace).chomp =~ /no matches/)
+    vm_folder_moid = _get_folder_moid("#{$vm_prefix}-#{$cluster_name}-vms",_get_folder_moid($fd_name,""))
+    actual_vm_num = `govc find -type m -i -dc "#{Shellwords.escape($dc_name)}" . -parent "#{vm_folder_moid}" -name "#{$vm_prefix}-*" | wc -l`.chomp.to_i
+    #actual_vm_num = `rvc #{$vc_rvc} --path #{@folder_path_escape} -c "vsantest.perf.get_vm_count #{$vm_prefix}-*" -c 'exit' -q`.chomp.to_i
+    if $vm_num != actual_vm_num #or (`rvc #{$vc_rvc} --path #{@folder_path_escape} -c "ls" -c 'exit' -q`.encode('UTF-8', :invalid => :replace).chomp =~ /no matches/)
       failure_handler "VM Deployment"
     end
     puts "Verifying If VMs are Accessible",@test_status_log
 
     vms = _ssh_to_vm
     for vm in vms
+      vm.strip!
       if !ssh_valid(vm,'root','vdbench')
         puts "VM #{vm} is NOT Reachable through SSH",@test_status_log
         puts "Please Verify IP Address and SSH Policy in Client Network",@test_status_log

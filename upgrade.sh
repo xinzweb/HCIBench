@@ -157,9 +157,7 @@ echo ""
 #
 # WORKER and TVM
 # ***********************************************
-cat $DIR/pkgs/vm-template/disk-0.vmdk.zip.parta* > $DIR/pkgs/vm-template/disk-0.vmdk.zip
-unzip $DIR/pkgs/vm-template/disk-0.vmdk.zip -d $DIR/pkgs/vm-template/
-rm -rf $DIR/pkgs/vm-template/*zip*
+cat $DIR/pkgs/vm-template/disk-0.vmdk.parta* > $DIR/pkgs/vm-template/disk-0.vmdk
 echo 'Copying new worker VM template'
 mv -f $DIR/pkgs/vm-template /opt/output/
 echo ""
@@ -297,6 +295,12 @@ systemctl start docker
 rm -rf /usr/local/bin/govc
 mv $DIR/pkgs/govc /usr/local/bin
 chmod +x /usr/local/bin/govc
+
+# UPDATE TELEGRAF_VSAN
+# **********************************************
+rm -rf /usr/local/bin/telegraf
+mv $DIR/pkgs/telegraf /usr/local/bin/
+chmod +x /usr/local/bin/telegraf
 
 # UPDATE REPOS
 # ***********************************************
