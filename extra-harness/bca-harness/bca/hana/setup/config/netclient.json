@@ -1,0 +1,66 @@
+{
+  "Variables": [
+    {
+      "Comment": "Hostname",
+      "Name": "HostName",
+      "Value": "localhost",
+      "Request": "true"
+    },
+    {
+      "Comment": "Hostport",
+      "Name": "HostPort",
+      "Value": "50000",
+      "Request": "true"
+    },
+    {
+      "Comment": "Blocksize",
+      "Name": "BlockSize",
+      "Value": "55000000",
+      "Request": "true"
+    },
+    {
+      "Comment": "Repeatcount",
+      "Name": "RepeatCount",
+      "Value": "100",
+      "Request": "true"
+    }
+  ],
+  "ExecutionPlan": [
+    {
+      "ID": "C79D08B3-F84A-4751-B0DC96156E4C9B08",
+      "Note": "Network Client",
+      "ExecutionVariants": [
+        {
+          "RepeatCount": "${RepeatCount}",
+          "Description": "Upstream and Downstream",
+          "InputVector": {
+            "HostPort": "${HostPort}",
+            "HostName": "${HostName}",
+            "SendDataSize": "${BlockSize}",
+            "ReceiveDataSize": "${BlockSize}"
+          }
+        },
+        {
+          "RepeatCount": "${RepeatCount}",
+          "Description": "Upstream",
+          "InputVector": {
+            "HostPort": "${HostPort}",
+            "HostName": "${HostName}",
+            "SendDataSize": "${BlockSize}",
+            "ReceiveDataSize": 0
+          }
+        },
+        {
+          "RepeatCount": "${RepeatCount}",
+          "Description": "Downstream",
+          "InputVector": {
+            "HostPort": "${HostPort}",
+            "HostName": "${HostName}",
+            "SendDataSize": 0,
+            "ReceiveDataSize": "${BlockSize}"
+          }
+        }
+      ]
+    }
+  ]
+}

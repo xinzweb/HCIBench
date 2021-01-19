@@ -1,0 +1,83 @@
+{
+  "Variables": [
+    {
+      "Comment": "Directory Path where the Fileaccess will be tested",
+      "Name": "DirectoryName",
+      "Value": "/hana/data",
+      "Request": "true",
+      "Profile": "LNX"
+    },
+    {
+      "Comment": "Block size in Bytes, the Blocks are secured with an CRC",
+      "Name": "BlockSize",
+      "Value": "4096",
+      "Request": "true"
+    },
+    {
+      "Comment": "Number of Blocks (->16GB file size)",
+      "Name": "NumOfBlocks",
+      "Value": "262144",
+      "Request": "true"
+    },
+    {
+      "Comment": "Maximum Blocks per Chunk (->2MB biggest written block)",
+      "Name": "MaxBlocksPerChunk",
+      "Value": "2048",
+      "Request": "true"
+    },
+    {
+      "Comment": "Test Duration in Seconds (->24h)",
+      "Name": "TestDuration",
+      "Value": "86400",
+      "Request": "true"
+    },
+    {
+      "Comment": "Reopen File after some Seconds (->1h)",
+      "Name": "FileReopenTime",
+      "Value": "3600",
+      "Request": "true"
+    },
+    {
+      "Comment": "Check File after some Seconds(->2h)",
+      "Name": "FileCheckTime",
+      "Value": "7200",
+      "Request": "true"
+    },
+    {
+      "Comment": "Repeat Count of Test(->24h)",
+      "Name": "TestRepeatCount",
+      "Value": "1",
+      "Request": "true"
+    },
+    {
+      "Comment": "Number of Threads",
+      "Name": "NumberOfThreads",
+      "Value": "3",
+      "Request": "true"
+    }
+  ],
+  "ExecutionPlan": [
+    {
+      "ID": "21BD2C62-378A-41C3-856A78FB14F91E08",
+      "Note": "Hyper-Converged Consistency Check",
+      "ExecutionVariants": [
+        {
+          "RepeatCount": "${TestRepeatCount}",
+          "Description": "Data is asynchronously written with random number of blocksize chunks and finally checked",
+          "InputVector": {
+            "DirectoryName": "${DirectoryName}",
+            "FileName": "datafile.log",
+            "BlockSize": "${BlockSize}",
+            "NumberOfBlocks": "${NumOfBlocks}",
+            "TestDuration": "${TestDuration}",
+            "MaxBlocksPerChunk": "${MaxBlocksPerChunk}",
+            "AsynchronousIO": "true",
+            "FileReopenTime": "${FileReopenTime}",
+            "FileCheckTime": "${FileCheckTime}",
+            "NumberOfThreads": "${NumberOfThreads}"
+          }
+        }
+      ]
+    }
+  ]
+}

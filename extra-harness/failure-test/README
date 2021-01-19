@@ -1,0 +1,16 @@
+1. fill the yaml file with
+- ESXi Management IP: IDRAC IP
+- IDRAC Username
+- IDRAC Password
+
+2. Make sure vMotion can work properly in the cluster you want to test
+
+3. Run any HCIBench testing you want
+
+4. Run the failure_test.rb script, the script will
+- empty a random ESXi by moving VMs off to other ESXis
+- hard-reboot the ESXi by running iDRAC cmd
+- wait for the ESXi to come back, and resync is finished
+- repeat the steps above
+
+5. in the end, you can compare the results of HCIBench with non-failure scenario
