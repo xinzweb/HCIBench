@@ -62,8 +62,16 @@ def validate_if_variable_empty var
 end
 
 def validate_subnets
-  msg = ValidateSubnets.new.ipv4_conflict?('docker0')
-  err_msg "There are interfaces that conflict with the internal docker network:\n#{msg.join("\n")}" if msg
+  begin
+    msg = ValidateSubnets.new.ipv4_conflict?('docker0')
+    err_msg "There are interfaces that conflict with the internal docker network:\n#{msg.join("\n")}" if msg
+    if $static_enabled
+      msg = ValidateSubnets.new.ipv4_subnet_conflict?('docker0', $starting_static_ip, $static_ip_size)
+      err_msg "The selected static network conflicts with the internal docker network:\n#{msg.join("\n")}" if msg
+    end
+  rescue => e
+    err_msg "There was an error while validating the subnets: #{e.message}"
+  end
 end
 
 def validate_vc_info
