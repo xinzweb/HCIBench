@@ -46,7 +46,7 @@ else
           end
           total_pcpu = total_num_of_pcpu.inject{ |sum, el| sum + el }
         end
-        msg += "#{cluster_name}: #{(pcpu_usage/total_pcpu).round(2)}%; "
+        msg += "#{cluster_name}: #{(pcpu_usage/total_pcpu).round(2)}%; " if pcpu_usage != 0.0
       else
         puts "#{dir} doesn't exist!"
         exit(1)
@@ -54,7 +54,6 @@ else
     end
   end
 end
-
 if msg.count(";") == 1
   print msg.scan(/[0-9]*.[0-9]*%/).join 
 else
