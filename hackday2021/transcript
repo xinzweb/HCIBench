@@ -1,0 +1,83 @@
+Welcome to the HCIGreenplum hackday 2021.
+We are from Greenplum Virtualization team.
+Today, we will present HCI Greenplum, which is based on HCIBench.
+We'd like to thank Charles Lee for his help.
+Charles Lee is the original contributor of HCIBench.
+He is also a V SAN solution architect.
+
+[[slnc 1500]]
+HCI stands for hyper-converged infrastructure.
+HCIGreenplum will enable single click GP deployments on any vSphere environment.
+It can support fully customized VM settings based on customer needs.
+For example, the number of CPUs per VM will be based on customer's concurrent user sessions.
+The total disk size will be based on customer's database size.
+The total number of VMs will be based on customer's query performance requirement.
+We give full flexibility to customers to change to their own need.
+With this OVA, it also comes with pre-baked Greenplum releases. They don't have to download those separately.
+
+[[slnc 1500]]
+The HCIGreenplum is distributed as a SINGLE OVA file. 
+The OVA file can be downloaded locally or it can be imported directly into the vSphere environment. 
+
+[[slnc 1500]]
+HCIGreenplum can be deployed by right clicking on the cluster in vCenter and selecting on the “Deploy OVF Template” option. 
+At this point you can enter the URL of the OVA from the VMware flings website or you can upload your local copy and follow the prompts.
+For the purposes of this talk, we will deploy HCIGreenplum by directly importing from URL into vSphere.
+
+[[slnc 1500]]
+Once the HCIGreenplum has been deployed successfully, you can access the UI by entering the following URL: https://IP address of the VM:8443
+There are 4 major sections of the UI:
+vSphere Environment Information.
+Greenplum Release Selection.
+Guest VM Configuration.
+Security Configuration.
+We will describe each section in details.
+
+[[slnc 1500]]
+The first thing is to configure the HCIGreenplum to connect to the vSphere environment.
+This includes the vCenter endpoint with login information.
+Then the DataCenter name, the cluster name, and optionally the resource pool name where you plan to deploy the GP cluster.
+After that, an optional VM folder Name to help manager your VMs.
+The Network Name is also specified here both as external connections and also as interconnect. In the real version, there will be separate network settings for interconnect and load-backup-restore etc.
+You can also specify whether to rely on DHCP to assign IPs to your GP VMs, or you can statically assign IPs with given subnet.
+The V SAN data store name is also specified here. The tool assumes the V SAN data store is already prepared. It will validate this setting during pre-validation.
+You also specify the storage policy for the data disk.
+
+[[slnc 1500]]
+Once customer input all the vSphere environment info, they can select the bundled Greenplum releases.
+Here for example, we list two latest releases of GP 5 and 6 respectively.
+After that, they need to configure their VMs based on their needs.
+We allow them to provide a VM name prefix for easy identification of their Greenplum instances.
+So far, from the capacity planning, we can help customer specify the total number of VMs, number of CPU perf VM, size of RAM per VM, as well as size of the data disk per VM.
+We imaging this interface should be more a capacity planning interface to help customer adjust the total compute and storage for given GP cluster and their requirements of the concurrency and loading time requirement. Then we can compute the recommended the VM specs for them.
+
+[[slnc 1500]]
+Encryption at rest is handled by both VSAN and VM encryption.
+End to end Encryption is handled only by VM encryption.
+
+[[slnc 1500]]
+After all the information filled, this HCI Greenplum also be able to validate the GP requirements with the capacity provided by the vSphere.
+Here is a demo screen indicating all the pre-validation check passed. Some ideas to be checked would be:
+vCenter connection,
+network,
+DHCP assignment,
+V SAN policy,
+VM sizing,
+availability of the KMS server,
+etc.
+
+[[slnc 1500]]
+After that, customer click on the `start deployment` button, and the GP cluster will be deployed!
+
+[[slnc 1500]]
+Once the GP deployed, all the VMs hosting the GP segments are up and running inside the vSphere cluster.
+
+[[slnc 1500]]
+What we did?
+We mock the UI
+We created the user story
+We changed the OVA file used by HCIBench
+We updated ansible to deploy GP on Photon 3.0 VMs created by HCIBench
+(optional) We tested the cluster using TPC-DS
+We prepared this slide deck and the demo video
+
