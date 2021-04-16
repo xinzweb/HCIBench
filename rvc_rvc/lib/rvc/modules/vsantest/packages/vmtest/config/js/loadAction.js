@@ -65,8 +65,8 @@ $(document).ready(
 						clearInterval(time);
 						// $("#runTest").removeAttr("disabled");
 					} else {
-						$('#myModal').modal('show');
-						$("#progress").show();
+						//$('#myModal').modal('show');
+						//$("#progress").show();
 						var mypath = "https://" + window.location.host + "/VMtest/readlog";
 						$.getJSON(mypath, function(data2) {
 							var str = data2["data"];
@@ -125,8 +125,8 @@ $(document).ready(
 						clearInterval(time);
 						// $("#runTest").removeAttr("disabled");
 					} else {
-						$('#myModal').modal('show');
-						$("#progress").show();
+						//$('#myModal').modal('show');
+						//$("#progress").show();
 						$("#cancelprocess").show();
 						var mypath = "https://" + window.location.host + "/VMtest/readlog";
 						$.getJSON(mypath, function(data2) {
