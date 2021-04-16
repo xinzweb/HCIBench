@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>HCIBench Configuration Page</title>
+<script type="text/javascript" src="js/view.js"></script>
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/loadAction.js"></script>
+<link rel="stylesheet" href="node_modules/@clr/ui/clr-ui-dark.min.css">
+<link rel="stylesheet" href="node_modules/@clr/icons/clr-icons.min.css">
+<script src="node_modules/@clr/icons/clr-icons.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/view.css" media="all" />
+<link rel="stylesheet" type="text/css" href="css/bootstrap.css" media="all" />
+<script>
+function getAddr()
+{
+	var addr = "https://" + window.location.hostname + ":8443/output/results";
+	document.getElementById("nest").src = addr;
+}
+</script>
+</head>
+<body onload="getAddr()">
+<style>
+    section {
+        padding: 1rem;
+    }
+</style>
+<header class="header-6">
+		<div class="branding">
+			<a href="https://labs.vmware.com/flings/hcibench" class="nav-link"> <clr-icon shape="dashboard"></clr-icon>
+				<span class="title">HCIBench</span>
+			</a>
+		</div>
+		<div class="header-nav">
+			<a href="../" class="nav-link"><span class="nav-text">Configuration</span></a> 
+			<a href="logs.html" class="nav-link"><span class="nav-text">Logs</span></a>
+			<a
+				href="results.html" class="active nav-link"><span class="nav-text">Results</span></a>
+		</div>
+	</header>
+	<iframe id="nest" style="width: 100%;height: 100vh; overflow: auto;" frameborder="0"></iframe>
+</body>
+</html>

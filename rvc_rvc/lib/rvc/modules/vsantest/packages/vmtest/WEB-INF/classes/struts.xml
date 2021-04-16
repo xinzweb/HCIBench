@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+	<constant name="struts.multipart.saveDir" value="/tmp" />
+	<constant name="struts.i18n.encoding" value="utf-8" />
+	<constant name="struts.locale" value="utf-8" />
+	<constant name="struts.multipart.maxSize" value="10000000000"></constant>
+
+	<package name="index" extends="json-default" namespace="/">
+	    <action name="index" class="com.vm.test.DealAction" method="index">
+			<result >/config/index.html</result>
+		</action>
+	
+		<action name="generatefile" class="com.vm.test.DealAction" method="generateFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="runtest" class="com.vm.test.DealAction" method="runTest">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="validatefile" class="com.vm.test.DealAction" method="validateFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="uploadvdbench" class="com.vm.test.DealAction" method="uploadVdbench">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="uploadParamfile" class="com.vm.test.DealAction" method="uploadParamfile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="istestfinish" class="com.vm.test.DealAction" method="isTestFinished">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="hasvdbenchfile" class="com.vm.test.DealAction" method="hasVdbenchFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="cleanupvms" class="com.vm.test.DealAction" method="cleanupVms">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="getvdbenchparamFile" class="com.vm.test.DealAction" method="getVdbenchParamFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="killtest" class="com.vm.test.DealAction" method="killTest">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="readconfigfile" class="com.vm.test.DealAction" method="readConfigFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="readlog" class="com.vm.test.DealAction" method="readLog">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="generateParam" class="com.vm.test.GenerateParam" method="generateParamFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="deleteFile" class="com.vm.test.GenerateParam" method="deleteFile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+		<action name="downloadFile" class="com.vm.test.Download">  
+            <result name="success" type="stream">  
+                <param name="contentType">application/octet-stream</param>  
+                <param name="contentDisposition">attachment;filename="${fileName}"</param>  
+                <param name="inputName">inputStream</param>   
+                <param name="buffserSize">4096</param>        
+       		</result>  
+        </action> 
+        
+        <action name="zipfile" class="com.vm.test.Download" method="zipfile">
+			<result name="success" type="json">
+				<param name="root">dataMap</param>
+			</result>
+			<result name="fail" type="json">
+				<param name="root">dataMap</param>
+			</result>
+		</action>
+		
+	</package>
+
+</struts>    

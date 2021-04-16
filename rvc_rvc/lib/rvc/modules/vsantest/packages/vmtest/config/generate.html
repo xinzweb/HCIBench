@@ -1,0 +1,503 @@
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Workload Parameter File Generate Page</title>
+<script type="text/javascript" src="js/view.js"></script>
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="node_modules/@clr/ui/clr-ui-dark.min.css">
+<link rel="stylesheet" href="node_modules/@clr/icons/clr-icons.min.css">
+<script type="text/javascript" scr="node_modules/@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js"></script>
+<script type="text/javascript" src="node_modules/@clr/icons/clr-icons.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/view.css" media="all" />
+<link rel="stylesheet" type="text/css" href="css/bootstrap.css" media="all" />
+<script type="text/javascript">
+
+	function removeFaultwithinTag(tagid) {
+		var ctns = document.getElementById(tagid).querySelectorAll("div[id$='ctn']");
+		for (var i = 0; i < ctns.length; i++) {
+			ctns[i].classList.remove('clr-error');
+		}
+	}
+	
+	function amplifyErr(tagid) {
+		var err = document.getElementById(tagid).querySelectorAll("span[id$='err']");
+		for (var i = 0; i < err.length; i++) {
+			if (!err[i].classList.contains("hide")) {
+				var id = err[i].id.substring(0, err[i].id.length - 3);
+				var ctnid = id + "ctn";
+				document.getElementById(ctnid).classList.add('clr-error');
+			}
+	
+		}
+	}
+
+	function saveButtonDisplay() {
+		var errField = document.getElementsByClassName("clr-error");
+		if (errField.length == 0)
+			$("#saveForm").attr("disabled", false);
+		else
+			$("#saveForm").attr("disabled", true);
+	}
+	
+	function showErr(ctnid, errid, msg) {
+		document.getElementById(ctnid).classList.add('clr-error');
+		document.getElementById(errid).classList.remove('hide');
+		document.getElementById(errid).innerHTML = msg;
+		$("#saveForm").attr("disabled", true);
+	}
+
+	function hideErr(ctnid, errid) {
+		document.getElementById(ctnid).classList.remove('clr-error');
+		document.getElementById(errid).classList.add('hide');
+		saveButtonDisplay();
+	}
+
+	function rangeCheck(value, id, min, max) {	
+		var errCondition = false;
+		var stmt = "";
+		if (id == "diskNum")
+			max = getUrlVars()["disknum"];
+		var containerId = id + "ctn";
+		var errId = id + "err";
+		
+		if (value.trim() == "" && document.getElementById(id).placeholder != "OPTIONAL"){
+			showErr(containerId, errId, 'Cant be empty');
+			return;
+		}
+		else
+			hideErr(containerId, errId);
+
+		if (value.trim() != ""){
+		if (max != 0) {
+			if (value > max || value < min) {
+				errCondition = true;
+				stmt = 'Range is between ' + String(min) + " and " + String(max);
+			}
+		} else {
+			if (value < min) {
+				errCondition = true;
+				stmt = 'Min value is ' + String(min);
+			}
+		}
+
+		if (!/^\d*$/.test(value)) {
+			errCondition = true;
+			stmt = 'Value must be positive integer';
+		}}
+
+		if (errCondition)
+			showErr(containerId, errId, stmt);
+		else
+			hideErr(containerId, errId);
+	}
+	
+	function getUrlVars() {
+		var vars = {};
+		var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+			vars[key] = value;
+		});
+		return vars;
+	}
+
+	function getSelectList() {
+		var formdata = new FormData();
+		$("#selectparam").empty();
+		var select = $("#selectparam");
+		var toolParam = getUrlVars()["tool"];
+		formdata.append("tool", toolParam);
+		$.ajax({
+			type : "post",
+			contentType : false,
+			processData : false,
+			url : "https://" + window.location.host + "/VMtest/getvdbenchparamFile?tool=" + toolParam,
+			async : true,
+			success : function(data) {
+				if (data["data"] != "404") {
+					var mm = data["data"];
+					$.each(mm, function(index, array) {
+						select.append("<option value='Value'>" + array + "</option>");
+					});
+					select.append("<option value='All'>Use All</option>");
+				}
+			}
+		});
+	}
+	
+	$(document).ready(function() {
+		var flag = true;
+		var id = getUrlVars()["disknum"];
+		var tool = getUrlVars()["tool"];
+		$("#diskNum").val(id);
+		
+		if (tool == "fio") {
+			document.getElementById("subtitle").textContent = "Fio Parameter Generation";
+			amplifyErr("fioTool");
+			$("#vdbenchOnly").hide();
+			$("#fioTool").show();
+		} else {
+			document.getElementById("subtitle").textContent = "Vdbench Parameter Generation";
+			removeFaultwithinTag("fioTool");
+			$("#fioTool").hide();
+			$("#vdbenchOnly").show();
+		}
+
+		$('#saveForm').click(function() {
+			var formdata = new FormData();
+			var msg = "";
+			var diskNum = $("#diskNum").val();
+			var workSet = $("#workSet").val();
+			var threadNum = $("#threadNum").val();
+			var blockSize = $("#blockSize").val();
+			var readPercent = $("#readPercent").val();
+			var randomPercent = $("#randomPercent").val();
+			var testTime = $("#testTime").val();
+			var warmupTime = $("#warmupTime").val();
+			var intervalTime = $("#intervalTime").val();
+			var ioRate = $("#ioRate").val();
+			var cpuUsage = $("#cpuUsage").val();
+
+			if (diskNum == "") {
+				flag = false;
+				msg += " Number of Disk,";
+			}
+			
+			if (id != "" && diskNum > id) {
+				flag = false;
+				msg += " Disk num cannot be greater than " + id;
+			}
+			
+			if (workSet == "" || workSet<0 || workSet>100) {
+				flag = false;
+				msg += " Working-Set Percentage,";
+			}
+			
+			if (threadNum == "" || threadNum < 1) {
+				flag = false;
+				msg += " Number of Thread per Disk,";
+			}
+			
+			if (readPercent == "" || readPercent<0 || readPercent>100) {
+				flag = false;
+				msg += " Read Percentage,";
+			}
+			
+			if (randomPercent == "" || randomPercent<0 || randomPercent>100) {
+				flag = false;
+				msg += " Random Percentage,";
+			}
+
+			if (testTime == "") {
+				flag = false;
+				msg += " Test Time,";
+			}
+
+			var rem_test = 0;
+			var rem_warm = 0;
+
+			if (intervalTime != "") {
+				rem_test = testTime % intervalTime;
+				if (warmupTime != "") {
+					rem_warm = warmupTime % intervalTime;
+				}
+			}
+
+			if (!flag) {
+				msg += " value invalid";
+				$('#myModal').modal("show");
+				$("#pcontent").text(msg);
+				flag = true;
+				return;
+			}
+
+			if (rem_test != 0) {
+				$('#myModal').modal("show");
+				$("#pcontent").text("Test time must be multiple of Interval time");
+				return;
+			}
+
+			if (rem_warm != 0) {
+				$('#myModal').modal("show");
+				$("#pcontent").text("Warmup time must be multiple of Interval time");
+				return;
+			}
+
+			formdata.append("diskNum", diskNum);
+			formdata.append("workSet", workSet);
+			formdata.append("threadNum", threadNum);
+			formdata.append("blockSize", blockSize);
+			formdata.append("readPercent", readPercent);
+			formdata.append("randomPercent", randomPercent);
+			formdata.append("ioRate", ioRate);
+			formdata.append("testTime", testTime);
+			formdata.append("warmupTime", warmupTime);
+			formdata.append("intervalTime", intervalTime);
+			formdata.append("cpuUsage", cpuUsage);
+			formdata.append("tool", tool);
+
+			$.ajax({
+				type : "post",
+				contentType : false,
+				processData : false,
+				data : formdata,
+				url : "https://" + window.location.host + "/VMtest/generateParam",
+				async : true,
+				success : function(data) {
+					if (data["status"] == "200") {
+						getSelectList();
+						$('#myModal').modal("show");
+						$("#pcontent").text("Generate Success!");
+					} else {
+						$('#myModal').modal("show");
+						$("#pcontent").text("Error!");
+					}
+				}
+			});
+
+		});
+	});
+	
+</script>
+<style>
+	body {
+		background-color: #17242B;
+	}
+	
+	section {
+		padding: 1rem;
+	}
+</style>
+</head>
+<body id="main_body">
+	<header class="header-6">
+		<div class="branding">
+			<a href="https://labs.vmware.com/flings/hcibench" class="nav-link"> <clr-icon shape="dashboard"></clr-icon>
+				<span class="title">HCIBench</span>
+			</a>
+		</div>
+		<div class="header-nav">
+			<a class="active nav-link"><span class="nav-text" id="subtitle"></span></a>
+		</div>
+	</header>
+	<section>
+		<div class="clr-form-control">
+			<label for="diskNum" class="clr-control-label">Number of Disks to Test</label>
+			<div id="diskNumctn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="diskNum" name="diskNum" class="clr-input" type="number" min="1" max="45"
+						maxlength="255" value="" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,1,8)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Number of Data Disk to be tested</span>
+					</a>
+				</div>
+				<span id="diskNumerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="workSet" class="clr-control-label">Working-Set Percentage</label>
+			<div id="workSetctn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="workSet" name="workSet" class="clr-input" type="number" min="1" max="100"
+						maxlength="255" value="" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,1,100)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Working Set Percentage of Data Disk(0-100)</span>
+					</a>
+				</div>
+				<span id="workSeterr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="threadNum" class="clr-control-label">Number of Threads Per Disk</label>
+			<div id="threadNumctn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="threadNum" name="threadNum" class="clr-input" type="number"
+						maxlength="255" value="2" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,1,0)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Number of Threads per Data Disk</span>
+					</a>
+				</div>
+				<span id="threadNumerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div id="alertbar" class="alert alert-app-level alert-danger hide" style="margin-bottom: 24px"
+			role="alert">
+			<button type="button" class="close" aria-label="Close" data-dismiss="alert">
+				<clr-icon aria-hidden="true" shape="close"></clr-icon>
+			</button>
+			<div class="alert-items">
+				<div class="alert-item static">
+					<div class="alert-icon-wrapper">
+						<clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+					</div>
+					<div id="alerttext" class="alert-text"></div>
+				</div>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="blockSize" class="clr-control-label">Block Size</label>
+			<div id="blockSizectn" class="clr-control-container">
+				<div class="clr-select-wrapper">
+					<select id="blockSize" name="blockSize" style="width: 200px;">
+						<option value="4k">4K</option>
+						<option value="8k">8K</option>
+						<option value="16k">16K</option>
+						<option value="32k">32K</option>
+						<option value="64k">64K</option>
+						<option value="128k">128K</option>
+						<option value="256k">256K</option>
+						<option value="512k">512K</option>
+						<option value="1024k">1024K</option>
+					</select>
+				</div>
+				<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+						shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+					style="width: 200px; font-size: 9pt">Block Size</span>
+				</a>
+			</div>
+			<span id="blockSizeerr" class="clr-subtext hide"></span>
+		</div>
+		<div class="clr-form-control">
+			<label for="readPercent" class="clr-control-label">Read Percentage</label>
+			<div id="readPercentctn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="readPercent" name="readPercent" class="clr-input" type="number" min="0"
+						max="100" maxlength="255" value="" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,0,100)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Read Percentage(0-100)</span>
+					</a>
+				</div>
+				<span id="readPercenterr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="randomPercent" class="clr-control-label">Random Percentage</label>
+			<div id="randomPercentctn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="randomPercent" name="randomPercent" class="clr-input" type="number"
+						min="0" max="100" maxlength="255" value="" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,0,100)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Seek(random) Percentage(0-100)</span>
+					</a>
+				</div>
+				<span id="randomPercenterr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="ioRate" class="clr-control-label">I/O Rate</label>
+			<div id="ioRatectn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="ioRate" name="ioRate" class="clr-input" type="number" min="1"
+						maxlength="255" value="" style="width: 200px;" placeholder="OPTIONAL"
+						onchange="rangeCheck(this.value,this.id,1,0)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">VM I/O Rate limit, if not specified, the rate is
+							unlimited. e.g. specifying 5000 means for each single VM will have 5000 IO/s as maximum</span>
+					</a>
+				</div>
+				<span id="ioRateerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="testTime" class="clr-control-label">Test Time</label>
+			<div id="testTimectn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="testTime" name="testTime" class="clr-input" type="number" min="1"
+						maxlength="255" value="" style="width: 200px;"
+						onchange="rangeCheck(this.value,this.id,1,0)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Testing Time(second)</span>
+					</a>
+				</div>
+				<span id="testTimeerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div class="clr-form-control">
+			<label for="warmupTime" class="clr-control-label">Warmup Time</label>
+			<div id="warmupTimectn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="warmupTime" name="warmupTime" type="number" min="0" class="clr-input"
+						maxlength="255" value="" style="width: 200px;" placeholder="OPTIONAL"
+						onchange="rangeCheck(this.value,this.id,1,0)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Warmup Time(second)</span>
+					</a>
+				</div>
+				<span id="warmupTimeerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<div id="vdbenchOnly" class="clr-form-control">
+			<label for="intervalTime" class="clr-control-label">Reporting Interval</label>
+			<div id="intervalTimectn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="intervalTime" name="intervalTime" type="number" min="1" class="clr-input"
+						maxlength="255" value="" style="width: 200px;" placeholder="OPTIONAL"
+						onchange="rangeCheck(this.value,this.id,1,0)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">Reporting interval time (seconds)(OPTIONAL), if
+							specified, test time and warmup time must be multiple of interval time</span>
+					</a>
+				</div>
+				<span id="intervalTimeerr" class="clr-subtext hide"></span>
+			</div>
+		</div>	
+		<div id="fioTool" class="clr-form-control">
+			<label for="cpuUsage" class="clr-control-label">Worker CPU Usage Percentage</label>
+			<div id="cpuUsagectn" class="clr-control-container">
+				<div class="clr-input-wrapper">
+					<input id="cpuUsage" name="cpuUsage" class="clr-input" type="number"
+						min="0" max="100" maxlength="255" value="" style="width: 200px;" placeholder="OPTIONAL"
+						onchange="rangeCheck(this.value,this.id,0,100)">
+					<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+					<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+							shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+						style="width: 200px; font-size: 9pt">CPU Usage Percentage(0-100)</span>
+					</a>
+				</div>
+				<span id="cpuUsageerr" class="clr-subtext hide"></span>
+			</div>
+		</div>
+		<br>
+		<div class="btn-group">
+			<button class="btn" id="saveForm" name="saveForm" disabled="true">Submit</button>
+			<a href="javascript:window.opener=null;window.open('','_self');window.close();"><button
+					class="btn" name="close">Close</button></a>
+		</div>
+	</section>
+	<div id="myModal" class="modal">
+		<div class="modal-dialog fadeDown in" role="dialog" aria-hidden="true">
+			<div class="modal-content">
+				<div class="modal-body">
+					<p class="lead" id="pcontent"></p>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" type="button" data-dismiss="modal">OK</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
