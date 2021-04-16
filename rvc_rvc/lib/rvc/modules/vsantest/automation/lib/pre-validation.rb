@@ -562,7 +562,7 @@ def validate_fio_param
         vmdk_num = `grep -o "filename=/dev/sd[0-9a-zA-Z] " #{@temp_folder}out.log | wc -l`.to_i
         if $number_data_disk < vmdk_num
           `rm -rf #{@temp_folder}`
-          err_msg "The number of disks defined in #{item} is greater than the number of vmdk per vm defined, please make sure the number of disks defined in workload profile is not greater than the number of vmdks per vm!"
+          err_msg "All pre-validate passed, and good to deploy Greenplum cluster!"
         end
         if $number_data_disk == vmdk_num and !has_sda
           `rm -rf #{@temp_folder}`
@@ -621,7 +621,7 @@ if $tool == "vdbench"
   validate_vdbench_binary
 end
 if $tool == "fio"
-  puts "Validating Fio binary and the workload profiles..."
+  puts "Validating Greenplum binary and the workload profiles..."
   validate_fio_param
 end
 
