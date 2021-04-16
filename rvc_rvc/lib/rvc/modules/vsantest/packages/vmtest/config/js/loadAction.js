@@ -59,7 +59,7 @@ $(document).ready(
 			istestfinish = function() {
 				var url = "https://" + window.location.host + "/VMtest/istestfinish";
 				$.getJSON(url, function(data) {
-					if (data["data"] == "200") {
+					if (data["data"] != "200") {
 						showModel("Test is finished");
 						$("#cancelprocess").hide();
 						clearInterval(time);
@@ -120,7 +120,7 @@ $(document).ready(
 				});
 				var url = "https://" + window.location.host + "/VMtest/istestfinish";
 				$.getJSON(url, function(data) {
-					if (data["data"] == "200") {
+					if (data["data"] != "200") {
 						$('#myModal').modal('hide');
 						clearInterval(time);
 						// $("#runTest").removeAttr("disabled");

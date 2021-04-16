@@ -30,9 +30,9 @@ def failure_handler(what_failed)
 
   puts "Testing Failed, For Details Please Find Logs in /opt/automation/logs", @test_status_log
   puts "Please Cancel And Re-Run The Testing",@test_status_log
-  while true
-    sleep(600)
-  end
+  # while true
+  #   sleep(600)
+  # end
 end
 
 #Check sdb space
