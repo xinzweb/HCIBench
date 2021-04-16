@@ -698,18 +698,17 @@ section {
 		</div>
 	</div>
 	<br/>
-	<h3>Workload Configuration</h3>
+	<h3>Security Configuration</h3>
 	<div class="clr-row clr-align-items-start">
 		<div class="clr-col">
 			<span>
 				<div class="clr-form-control">
-					<label for="outPath" class="clr-control-label">Workload Name</label>
+					<label for="outPath" class="clr-control-label">Key Management Server</label>
 					<div id="outPathctn" class="clr-control-container">
 						<div class="clr-select-wrapper">
 							<select id="outPath" onchange="contentChanged()">
-								<option value="TPC-DS-scale-1">TPC-DS Scale 1 (1GB)</option>
-								<option value="TPC-DS-scale-3000">TPC-DS Scale 3000 (3TB)</option>
-								<option value="FTP">Functional Threshold Power (FTP)</option>
+								<option value="nkp">Native Key Provider</option>
+								<option value="kms">Certified KMS Server</option>
 							</select>
 						</div>
 						<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> 
