@@ -1,0 +1,995 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>HCIGreenplum Configuration Page</title>
+<script type="text/javascript" src="config/js/view.js"></script>
+<script type="text/javascript" src="config/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="config/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="config/js/loadAction.js"></script>
+<link rel="stylesheet" href="config/node_modules/@clr/ui/clr-ui-dark.min.css"/>
+<link rel="stylesheet" href="config/node_modules/@clr/icons/clr-icons.min.css"/>
+<script type="text/javascript" src="config/node_modules/@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js"></script>
+<script type="text/javascript" src="config/node_modules/@clr/icons/clr-icons.min.js"></script>
+<link rel="stylesheet" type="text/css" href="config/css/view.css" media="all" />
+<link rel="stylesheet" type="text/css" href="config/css/bootstrap.css" media="all" />
+<script type="text/javascript">
+
+	function showErrWhilePatternMismatch(value,pattern,ctnid,errid,msg)
+	{
+	    if (patternCheck(value,pattern))
+			hideErr(ctnid, errid);
+	    else
+			showErr(ctnid, errid, msg);
+	    saveButtonDisplay();
+	}
+
+	function patternCheck(value,pattern)
+	{
+	    pattern = new RegExp(pattern);
+	    if (pattern.test(value))
+			return true;
+	    else{
+			console.log(value + " pattern mismatch!");
+			return false;
+	    }	
+	}
+
+	function showCustomize()
+	{
+	    option_index = document.getElementById("staticIpprefix").selectedIndex;
+	    if (option_index == 15 && document.getElementById("staticEnabled").checked)
+			$("#starting_ip").show();
+	    else
+		{
+			hideErr('startingIpctn','startingIperr');
+			$("#starting_ip").hide();
+		}
+	    saveButtonDisplay();	
+	}
+
+	function removeFaultwithinTag(tagid) {
+		var ctns = document.getElementById(tagid).querySelectorAll("div[id$='ctn']");
+		for (var i = 0; i < ctns.length; i++) {
+			ctns[i].classList.remove('clr-error');
+		}
+	}
+
+	function amplifyErr(tagid) {
+		var err = document.getElementById(tagid).querySelectorAll("span[id$='err']");
+		for (var i = 0; i < err.length; i++) {
+			if (!err[i].classList.contains("hide")) {
+				var id = err[i].id.substring(0, err[i].id.length - 3);
+				var ctnid = id + "ctn";
+				document.getElementById(ctnid).classList.add('clr-error');
+			}
+
+		}
+	}
+
+	function saveButtonDisplay() {
+		var errFields = document.querySelectorAll("div[id$='ctn']");
+		var errFind = false;
+		for (var i = 0; i < errFields.length; i++) {
+			if (errFields[i].classList.contains("clr-error"))
+				errFind = true;	
+		}
+		if (errFind)
+			$("#saveForm").attr("disabled", true);
+		else
+			$("#saveForm").attr("disabled", false);
+	}
+
+	function showErr(ctnid, errid, msg) {
+		document.getElementById(ctnid).classList.add('clr-error');
+		document.getElementById(errid).classList.remove('hide');
+		document.getElementById(errid).innerHTML = msg;
+	}
+
+	function hideErr(ctnid, errid) {
+		document.getElementById(ctnid).classList.remove('clr-error');
+		document.getElementById(errid).classList.add('hide');
+		document.getElementById(errid).innerHTML = "";
+	}
+
+	function emptyCheck(value, id) {
+		var containerId = id + "ctn";
+		var errId = id + "err";
+
+		if (value.trim() == "")
+			showErr(containerId, errId, "Can't be empty");
+		else
+			hideErr(containerId, errId);
+
+		saveButtonDisplay();
+	}
+
+	function emptyCheckwithCondition(value, id) {
+		var containerId = id + "ctn";
+		var errId = id + "err";
+		var deployhost = document.getElementById("deployHost");
+		var easyrun = document.getElementById("easyRun");
+		var clearcache = document.getElementById("clearCache");
+		var vsandebug = document.getElementById("vsanDebug");
+		var startingIp = document.getElementById("startingIp");
+		var staticIpprefix = document.getElementById("staticIpprefix");
+		
+		if ((value.trim() == "" && id == "hosts" && deployhost.checked) || (value.trim() == "" && id == "workloads" && easyrun.checked)
+				|| (value.trim() == "" && id == "hostName" && (clearCache.checked || vsandebug.checked)) || (value.trim() == "" && id == "startingIp" && staticIpprefix.selectedIndex == 15))
+			showErr(containerId, errId, 'Cant be empty');
+		else
+			hideErr(containerId, errId);
+
+		saveButtonDisplay();
+	}
+
+	function verifyPositiveValue(value, id) {
+		var containerId = id + "ctn";
+		var errId = id + "err";
+
+		if (/^\+?[1-9][\d]*$/.test(value))//correct condition
+			hideErr(containerId, errId);
+		else
+			showErr(containerId, errId, 'Positive Integer Needed');
+
+		if (value.trim() == "" && document.getElementById(id).placeholder == "OPTIONAL")
+			hideErr(containerId, errId);
+
+		saveButtonDisplay();
+	}
+
+	function verifyName(value, id) {
+		var containerId = id + "ctn";
+		var errId = id + "err";
+
+		if (/^[a-zA-Z0-9-_]*$/.test(value.trim()))
+			hideErr(containerId, errId);
+		else
+			showErr(containerId, errId, 'To avoid drama, only letter, number, _ and - are allowed');
+
+		if (value.trim() == "" && document.getElementById(id).placeholder == "OPTIONAL")
+			hideErr(containerId, errId);
+
+		saveButtonDisplay();
+	}
+
+	function contentChanged() {
+		$("#runValidation").attr("disabled", true);
+		$("#runTest").attr("disabled", true);
+		saveButtonDisplay();
+	}
+
+	function getSelectList(toolParam) {
+
+		var formdata = new FormData();
+		$("#selectparam").empty();
+		var select = $("#selectparam");
+		formdata.append("tool", toolParam);
+		$.ajax({
+			type : "post",
+			contentType : false,
+			processData : false,
+			data : formdata,
+			url : "https://" + window.location.host + "/VMtest/getvdbenchparamFile",
+			async : true,
+			success : function(data) {
+				if (data["data"] != "404") {
+					var mm = data["data"];
+					$.each(mm, function(index, array) {
+						select.append("<option value='Value'>" + array + "</option>");
+					});
+					select.append("<option value='All'>Use All</option>");
+				}
+			}
+		});
+	}
+
+	function hideUploadVdbench(tool) {
+		//change vm name prefix
+
+		var vmprefix = document.getElementById("vmPrefix").value;
+		if (['hci-fio','hci-vdb',''].indexOf(vmprefix.trim()) != -1) {
+			if (tool == "fio")
+				document.getElementById("vmPrefix").value = "hci-fio";
+			if (tool == "vdbench")
+				document.getElementById("vmPrefix").value = "hci-vdb";
+			hideErr("vmPrefixctn", "vmPrefixerr");
+		}
+		$.getJSON("https://" + window.location.host + "/VMtest/hasvdbenchfile", function(data) {
+			if (data["data"] != "200" && tool == "vdbench")
+				$("#uploadBinary").show();
+			else
+				$("#uploadBinary").hide();
+
+		});
+		saveButtonDisplay();
+	}
+
+	function valueChanged(checked) {
+		if (checked == false) {
+			removeFaultwithinTag("easyRunWorkloads");
+			amplifyErr("complex");
+			$("#complex").show();
+			$("#easyRunWorkloads").hide();
+		} else {
+			removeFaultwithinTag("complex");
+			amplifyErr("easyRunWorkloads");
+			$("#complex").hide();
+			$("#easyRunWorkloads").show();
+
+		}
+		saveButtonDisplay();
+	}
+	
+	function clearCacheValueChange() {
+	    var cc = document.getElementById("clearCache");
+        var vd = document.getElementById("vsanDebug");
+		if (cc.checked || vd.checked)
+		{
+		    amplifyErr("host_credential");
+		    $("#host_credential").show();
+		    }
+		else
+		{
+			removeFaultwithinTag("host_credential");
+            $("#host_credential").hide();
+        }
+            saveButtonDisplay();
+    }
+
+	function staticIp(checked) {
+		if (checked) {
+			$("#staticprefix").show();
+		} else {
+			$("#staticprefix").hide();
+		}
+	}
+
+	function hostDeployValueChange(checked) {
+		if (checked) {
+			amplifyErr("hosts_list");
+			$("#hosts_list").show();
+		} else {
+			removeFaultwithinTag("hosts_list");
+			$("#hosts_list").hide();
+		}
+		saveButtonDisplay();
+	}
+</script>
+</head>
+<body>
+	<style>
+body {
+background-color: #17242B; 
+}
+section {
+	padding: 1rem;
+}
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+.upload-btn-wrapper input[type=file] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+</style>
+	<header class="header-6">
+	<div class="branding">
+		<a href="https://labs.vmware.com/flings/hcibench" class="nav-link"> <clr-icon shape="dashboard"></clr-icon>
+			<span class="title">HCIGreenplum</span>
+		</a>
+	</div>
+	<div class="header-nav">
+		<a href="./" class="active nav-link"><span class="nav-text">Configuration</span></a> <a
+			href="config/logs.html" class="nav-link"><span class="nav-text">Logs</span></a> <a
+			href="config/results.html" class="nav-link"><span class="nav-text">Results</span></a>
+	</div>
+	</header>
+	<section>
+	<h3>vSphere Environment Information</h3>
+	<div class="clr-row clr-justify-content-start">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="vcenterIp" class="clr-control-label">vCenter Hostname/IP</label>
+					<div id="vcenterIpctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="vcenterIp" name="vcenterIp" placeholder="" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged();emptyCheck(this.value,this.id)">
+								<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">vCenter IP address
+									or FQDN</span>
+							</a>
+						</div>
+						<span id="vcenterIperr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="dcenterName" class="clr-control-label">Datacenter Name</label>
+					<div id="dcenterNamectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="dcenterName" name="dcenterName" placeholder="" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged();emptyCheck(this.value,this.id)">
+								<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Datacenter name</span>
+							</a>
+						</div>
+						<span id="dcenterNameerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="fdName" class="clr-control-label">VM Folder Name</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="fdName" name="fdName" placeholder="OPTIONAL" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged()"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">VM folder name</span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="vertical-textarea-basic" class="clr-control-label">Datastore(s) Name</label>
+					<div id="dstoreNamectn" class="clr-control-container">
+						<div class="clr-textarea-wrapper">
+							<textarea id="dstoreName" name="" placeholder="Enter Datastore names here, one per line"
+								class="clr-textarea" cols="38" onchange="contentChanged();emptyCheck(this.value,this.id)"></textarea>
+							<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+							<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">The Datastore name the guest VMs will be
+									deployed on.You can specify multiple datastores, in this case, test VMs will be deployed
+									evenly across these datastores.</span>
+							</a>
+						</div>
+						<span id="dstoreNameerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="vcenterName" class="clr-control-label">vCenter Username</label>
+					<div id="vcenterNamectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="vcenterName" name="vcenterName" placeholder="" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged();emptyCheck(this.value,this.id)">
+								<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">vCenter
+									administrator username</span>
+							</a>
+						</div>
+						<span id="vcenterNameerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="clusterName" class="clr-control-label">Cluster Name</label>
+					<div id="clusterNamectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="clusterName" name="clusterName" placeholder="" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged();emptyCheck(this.value,this.id)">
+								<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Cluster name</span>
+							</a>
+						</div>
+						<span id="clusterNameerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="networkName" class="clr-control-label">Network Name</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="networkName" name="networkName" placeholder="OPTIONAL"
+								class="clr-input" maxlength="255" size="40" onchange="contentChanged()"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Network name which
+									the guest VMs will be deployed on. If not specified, network "VM Network" will be used as
+									default</span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="storagePolicy" class="clr-control-label">Storage Policy</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="storagePolicy" name="storagePolicy" placeholder="OPTIONAL"
+								class="clr-input" maxlength="255" size="40" onchange="contentChanged()"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Specify the
+									storage policy to the client VMs, if not specified, the default storage policy will be
+									used, the storage policy will only be applied on newly created VMs</span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="vcenterPwd" class="clr-control-label">vCenter Password</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="password" id="vcenterPwd" name="vcenterPwd" placeholder="" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged()"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">vCenter administrator password</span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="rpName" class="clr-control-label">Resource Pool Name</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="rpName" name="rpName" placeholder="OPTIONAL" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged()"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">Resource Pool name</span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="staticEnabled" class="clr-control-label">You Don't Have DHCP?</label>
+					<div class="clr-toggle-wrapper">
+						<input type="checkbox" id="staticEnabled" name="staticEnabled" class="clr-toggle"
+							onchange="staticIp(this.checked);contentChanged();showCustomize()"><label class="clr-subtext"
+							for="staticEnabled">OPTIONAL<a role="tooltip" aria-haspopup="true"
+							class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon> <span
+								class="tooltip-content" style="width: 200px; font-size: 9pt">Set Internal Static IP
+									for Guest VM</span>
+						</a></label>
+						<div style="display: none" id="staticprefix" class="clr-select-wrapper">
+							<select id="staticIpprefix" class="clr-select" onchange="contentChanged();showCustomize()" style="max-width: 174px">
+								<option value="192.168">192.168</option>
+								<option value="172.16">172.16</option>
+								<option value="172.18">172.18</option>
+								<option value="172.19">172.19</option>
+								<option value="172.20">172.20</option>
+								<option value="172.21">172.21</option>
+								<option value="172.23">172.23</option>
+								<option value="172.24">172.24</option>
+								<option value="172.25">172.25</option>
+								<option value="172.26">172.26</option>
+								<option value="172.27">172.27</option>
+								<option value="172.28">172.28</option>
+								<option value="172.29">172.29</option>
+								<option value="172.30">172.30</option>
+								<option value="172.31">172.31</option>
+								<option value="Customize">Customize</option>					
+							</select>
+						</div>
+					</div>
+				</div>
+				
+				<div class="clr-form-control" id="starting_ip">
+					<label for="startingIp" class="clr-control-label">Starting IP Address/Subnet Size</label>
+					<div class="clr-control-container" id="startingIpctn">
+						<div class="clr-input-wrapper">
+							<input type="text" id="startingIp" name="startingIp" placeholder="192.168.0.1/24" class="clr-input" pattern=((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){3}\/([1-2][0-9]|[0-9]|3[0-2])$
+								maxlength="255" size="40" onchange="contentChanged();emptyCheckwithCondition(this.value,this.id);showErrWhilePatternMismatch(this.value,this.pattern,'startingIpctn','startingIperr','Please follow the pattern IP/Size, e.g. 10.0.0.101/24')"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">Starting IP Address using CIDR format, if N of VMs is specified to deploy, HCIBench will use N+1 IPs starting from the one you specified as HCIBench eth1 IP, and other IPs will be used by Guest VMs</span>
+							</a>
+						</div>
+						<span id="startingIperr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				
+				 <br />
+				<div class="clr-form-control">
+					<label for="clearCache" class="clr-control-label">Clear Read/Write Cache Before Each
+						Test Case</label>
+					<div class="clr-toggle-wrapper">
+						<input type="checkbox" id="clearCache" name="clearCache" class="clr-toggle"
+							onchange="clearCacheValueChange();contentChanged()"><label
+							class="clr-subtext" for="clearCache">OPTIONAL<a role="tooltip" aria-haspopup="true"
+							class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon> <span
+								class="tooltip-content" style="width: 200px; font-size: 9pt">The read and write cache
+									could be flushed before each test when testing vSAN, if this is CHECKED, you need to
+									provide ESXis credential and have SSH access to ESXis</span>
+						</a></label>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="vsanDebug" class="clr-control-label">vSAN Debug Mode</label>
+					<div class="clr-toggle-wrapper">
+						<input type="checkbox" id="vsanDebug" name="vsanDebug" class="clr-toggle"
+							onchange="clearCacheValueChange();contentChanged()"><label
+							class="clr-subtext" for="vsanDebug">OPTIONAL<a role="tooltip" aria-haspopup="true"
+							class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon> <span
+								class="tooltip-content" style="width: 200px; font-size: 9pt">If testing against vSAN, turning this on will: 
+								<br />1. Collect vmkstats for 1 minute after testing started 30 minutes
+								<br />2. Collect VM support bundle after each test case, the support bundle is at PO level
+								<br />3. Change performance service interval from 5 minutes to 1 minute in order to get better granularity during the testing
+								<br />4. vSAN performance service verbose mode will be turned on during the testing
+								</span>
+						</a></label>
+					</div>
+				</div>		
+			</span>
+		</div>
+	</div>
+	</section>
+	<section>
+	<div class="clr-row clr-justify-content-start">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="deployHost" class="clr-control-label">Specify Hosts to Deploy</label>
+					<div class="clr-toggle-wrapper">
+						<input type="checkbox" id="deployHost" name="deployHost" class="clr-toggle"
+							onchange="hostDeployValueChange(this.checked);contentChanged()"><label
+							class="clr-subtext" for="deployHost">OPTIONAL<a role="tooltip" aria-haspopup="true"
+							class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon> <span
+								class="tooltip-content" style="width: 200px; font-size: 9pt">If checked, the Hosts
+									field must be set. Guest VMs will only be deployed to those hosts. If unchecked, the guest
+									VMs will be deployed into the cluster in round-robin manner.</span>
+						</a></label>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control" id="hosts_list">
+					<label for="vertical-textarea-basic" class="clr-control-label">Hosts</label>
+					<div id="hostsctn" class="clr-control-container">
+						<div class="clr-textarea-wrapper">
+							<textarea id="hosts" name="hosts" placeholder="Enter Host IP/Hostname here, one per line"
+								class="clr-textarea" cols="40"
+								onchange="contentChanged();emptyCheckwithCondition(this.value,this.id)"></textarea>
+							<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+							<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">The IP addresses or FQDNs of the hosts that you
+									want to deploy the client VMs on</span>
+							</a>
+						</div>
+						<span id="hostserr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control" id="host_credential">
+					<label for="hostName" class="clr-control-label">Host Username</label>
+					<div id="hostNamectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="hostName" name="hostName"
+								placeholder="Needed if CLEAR_CACHE/vSAN_DEBUG is on" class="clr-input" maxlength="255" size="40"
+								onchange="contentChanged();emptyCheckwithCondition(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">The ESXi username</span>
+							</a>
+						</div>
+						<span id="hostNameerr" class="clr-subtext hide"></span>
+					</div>
+					<br /> <label for="hostPwd" class="clr-control-label">Host Password</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="password" id="hostPwd" name="hostPwd"
+								placeholder="Needed if CLEAR_CACHE/vSAN_DEBUG is on" class="clr-input" maxlength="255" size="40"
+								onchange="contentChanged()"> <clr-icon class="clr-validate-icon"
+									shape="exclamation-circle"></clr-icon><a role="tooltip" aria-haspopup="true"
+								class="tooltip tooltip-xs tooltip-top-left"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">The ESXi password</span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</span>
+		</div>
+	</div>
+	</section>
+	<section>
+	<div class="clr-row clr-justify-content-start">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="easyRun" class="clr-control-label">Easy Run</label>
+					<div class="clr-control-container">
+						<div class="clr-toggle-wrapper">
+							<input type="checkbox" id="easyRun" name="easyRun" class="clr-toggle"
+								onchange="valueChanged(this.checked);contentChanged()"><label class="clr-subtext"
+								for="easyRun">OPTIONAL<a role="tooltip" aria-haspopup="true"
+								class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon> <span
+									class="tooltip-content" style="width: 200px; font-size: 9pt">Easy Run is able to
+										configure the VM and workload automatically by detecting vSAN configuration, then start
+										testing if testing against vSAN</span>
+							</a></label>
+						</div>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<div style="display: none" id="easyRunWorkloads" class="clr-select-wrapper">
+						<div id="workloadsctn" class="clr-control-container">
+							<label for="workloads" class="clr-control-label">Select One or More Easy Run
+								Workloads</label> <select style="width: 340px" id="workloads" class="clr-select" multiple required
+								onchange="contentChanged();emptyCheckwithCondition(this.value,this.id)">
+								<option selected value="4k70r">4K/70%Read/100%Random</option>
+								<option selected value="4k100r">4K/100%Read/100%Random</option>
+								<option selected value="8k50r">8K/50%Read/100%Random</option>
+								<option selected value="256k0r">256K/100%Write/100%Sequential</option>
+							</select>
+						</div>
+						<span id="workloadserr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="reuseVM" class="clr-control-label">Reuse VMs If Possible</label>
+					<div class="clr-control-container">
+						<div class="clr-toggle-wrapper">
+							<input type="checkbox" id="reuseVM" name="reuseVM" class="clr-toggle" checked
+								onchange="contentChanged()"><label class="clr-subtext" for="reuseVM">OPTIONAL<a
+								role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+										shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+									style="width: 200px; font-size: 9pt">If there are compatible client VMs (comparing
+										with the configuration, number of VMs and Data Disks etc.), use those VMs for more tests
+										without re-deployment. </span>
+							</a></label>
+						</div>
+					</div>
+				</div>
+			</span>
+		</div>
+	</div>
+	</section>
+	<br />
+	<section>
+	<h3>Greenplum Release</h3>
+	<div class="clr-row clr-align-items-center">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="tool" class="clr-control-label">Choose the Greenplum Release</label>
+					<div class="clr-control-container">
+						<div class="clr-select-wrapper">
+							<select id="tool" 
+								onchange="getSelectList(this.value);hideUploadVdbench(this.value);contentChanged()">
+								<option value="fio">Greenplum 5.28.7</option>
+								<option value="vdbench">Greenplum 6.15.0</option>
+							</select>
+						</div>
+						<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+								shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+							style="width: 200px; font-size: 9pt">You can choose the Greenplum release to deploy</span>
+						</a>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control hide" id="uploadBinary">
+					<label for="tool" class="clr-control-label"><a
+						href="https://www.oracle.com/technetwork/server-storage/vdbench-downloads-1901681.html"
+						target="_blank">Download Vdbench</a></label>
+					<div id="vdbenchfilectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<button class="btn btn-sm upload-btn-wrapper" id="selectVdbench" name="selectVdbench"><input id="vdbenchfile" name="vdbenchfile" type="file" />Select Vdbench Zip</button>
+							<button class="btn btn-sm" id="uploadVdbench" name="uploadVdbench">Upload Vdbench
+								Zip</button>
+							<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+							<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">Download Vdbench zip -> Select zip -> Upload</span>
+							</a>
+						</div>
+						<span id="vdbenchfileerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+	</div>
+	</section>
+	<section id="complex">
+	<h3>Guest VM Configuration</h3>
+	<div class="clr-row clr-align-items-start">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="vmPrefix" class="clr-control-label">VM Name Prefix</label>
+					<div id="vmPrefixctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="vmPrefix" name="vmPrefix" class="clr-input" maxlength="7"
+								style="width: 200px;" onchange="contentChanged();verifyName(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Name Prefix of
+									Client VMs, if not specified, the default value of benchmarking tool will be used(Max
+									length: 7)</span>
+							</a>
+						</div>
+						<span id="vmPrefixerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="vmNum" class="clr-control-label">Number of VMs</label>
+					<div id="vmNumctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" id="vmNum" name="vmNum" min="1" value="" class="clr-input"
+								maxlength="255" style="width: 200px;"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Number of VMs to deploy</span>
+							</a>
+						</div>
+						<span id="vmNumerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="cpuNum" class="clr-control-label">Number of CPU</label>
+					<div id="cpuNumctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" id="cpuNum" name="cpuNum" min="1" value="4" class="clr-input"
+								maxlength="255" style="width: 200px;"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Number of CPU per VM</span>
+							</a>
+						</div>
+						<span id="cpuNumerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+			<span>
+				<div class="clr-form-control">
+					<label for="ramSize" class="clr-control-label">Size of RAM in GB</label>
+					<div id="ramSizectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" id="ramSize" name="ramSize" min="1" value="8" class="clr-input"
+								maxlength="255" style="width: 200px;"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">Memory size per VM in GB</span>
+							</a>
+						</div>
+						<span id="ramSizeerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="diskNum" class="clr-control-label">Number of Data Disk</label>
+					<div id="diskNumctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" id="diskNum" name="diskNum" min="1" max="45" value="8" class="clr-input"
+								maxlength="255" style="width: 200px;"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)">
+							<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+							<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">Number of data disks per VM, default is 8</span>
+							</a>
+						</div>
+						<span id="diskNumerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+			<span>
+				<div class="clr-form-control">
+					<label for="diskSize" class="clr-control-label">Size of Data Disk in GiB</label>
+					<div id="diskSizectn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" min="1" max="63488" id="diskSize" name="diskSize" value="10"
+								class="clr-input" maxlength="255" style="width: 200px;"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">Size (GB) of Data Disk, default is 10</span>
+							</a>
+						</div>
+						<span id="diskSizeerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+	</div>
+	<br/>
+	<h3>Workload Configuration</h3>
+	<div class="clr-row clr-align-items-start">
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="outPath" class="clr-control-label">Workload Name</label>
+					<div id="outPathctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="text" id="outPath" name="outPath" placeholder="OPTIONAL" class="clr-input"
+								maxlength="255" size="40" onchange="contentChanged();verifyName(this.value,this.id)">
+								<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">By specifying the
+									name of workload, it will create a sub-dir with the same name in "/opt/output/results"; if not
+									specified, a name with time stamp will be generated</span>
+							</a>
+						</div>
+						<span id="outPatherr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+				<div class="clr-form-control">
+					<label for="warmUp" class="clr-control-label">Encryption</label>
+					<div class="clr-control-container">
+						<div class="clr-select-wrapper">
+							<select id="warmUp" onchange="contentChanged()">
+								<option value="NONE">No Encryption</option>
+								<option value="ZERO">Encryption-at-Rest</option>
+								<option value="RANDOM">Encryption-in-Transit</option>
+							</select>
+						</div>
+						<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+								shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+							style="width: 200px; font-size: 9pt">You can choose how to encrypt your data</span>
+						</a>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col">
+			<span>
+				<div class="clr-form-control">
+					<label for="select-full" class="clr-control-label">Select a Workload Parameter File</label>
+					<div class="clr-control-container">
+						<div class="clr-select-wrapper">
+							<select id="selectparam" class="clr-select" onchange="contentChanged()">
+								<option value=""></option>
+							</select>
+						</div>
+						<div class="btn-group btn-outline-primary btn-sm">
+							<button class="btn" id="generate" name="generate">Add</button>
+							<button class="btn" id="refresh" name="refresh">Refresh</button>
+							<button class="btn" id="deleteItem" name="deleteItem">Delete</button>
+						</div>
+						<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+								shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+							style="width: 200px; font-size: 9pt">You can add, select or delete a workload
+								parameter file for testing, or you can use all the parameter files to have multiple runs by
+								selecting "Use All"</span>
+						</a>
+					</div>
+				</div>
+				<div class="clr-form-control" style="visibility: hidden" >
+					<label for="duration" class="clr-control-label">Testing Duration (Seconds)</label>
+					<div id="durationctn" class="clr-control-container">
+						<div class="clr-input-wrapper">
+							<input type="number" id="duration" name="duration" value="1" placeholder="OPTIONAL" class="clr-input"
+								maxlength="255" size="40"
+								onchange="contentChanged();verifyPositiveValue(this.value,this.id)"> <clr-icon
+									class="clr-validate-icon" shape="exclamation-circle"></clr-icon><a role="tooltip"
+								aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon shape="info-circle" size="24"></clr-icon>
+								<span class="tooltip-content" style="width: 200px; font-size: 9pt">You can overwrite
+									the testing time. If specified, all the tests will run for the time specified, otherwise
+									each test will use its own "elapsed" value from each individual parameter file</span>
+							</a>
+						</div>
+						<span id="durationerr" class="clr-subtext hide"></span>
+					</div>
+				</div>
+			</span>
+		</div>
+		<div class="clr-col" style="visibility: hidden">
+			<span>
+				<div class="clr-form-control">
+					<label for="paramfile" class="clr-control-label">Upload a Parameter File</label>
+					<div class="clr-control-container">
+						<div class="clr-input-wrapper"> 
+							<button class="btn btn-sm upload-btn-wrapper"><input id="paramfile" name="paramfile" type="file" />Select a file</button>
+							<button class="btn btn-sm" id="uploadParamfile" name="uploadParamfile">Upload</button>
+							<clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+							<a role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs tooltip-top-left"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">You can simply upload your self defined
+									parameter file for testing</span>
+							</a>
+						</div>
+					</div>
+				</div> <br />
+				<div class="clr-form-control">
+					<label for="cleanUp" class="clr-control-label">Delete VM After Testing</label>
+					<div class="clr-toggle-wrapper">
+						<input type="checkbox" id="cleanUp" name="cleanUp" class="clr-toggle"><label
+							class="clr-subtext" for="cleanUp" onchange="contentChanged()">OPTIONAL<a
+							role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs"> <clr-icon
+									shape="info-circle" size="24"></clr-icon> <span class="tooltip-content"
+								style="width: 200px; font-size: 9pt">You can delete all the guest VMs after testing</span>
+						</a></label>
+					</div>
+				</div>
+			</span>
+		</div>
+	</div>
+	</section>
+	<br />
+	<section>
+	<div class="btn-group">
+		<button class="btn" id="saveForm">Save Config</button>
+		<button class="btn" id="runValidation">Validate Config</button>
+		<button class="btn" id="runTest">Start Test</button>
+		<button class="btn" id="seeresult">Review Result</button>
+		<button class="btn" id="saveResult">Save Result</button>
+		<button class="btn" id="cleanVms">Delete Guest VMs</button>
+	</div>
+	</section>
+	<div id="myModal" class="modal">
+		<div class="modal-dialog modal-lg fadeDown in" role="dialog" aria-hidden="true">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div>
+						<p class="lead" id="pcontent"></p>
+					</div>
+					<div id="progress" class="progress progress-striped active">
+						<div id="progressbar" class="bar" style="width: 100%;"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" type="button" data-dismiss="modal">Close Window</button>
+					<button id="cancelprocess" class="btn btn-primary" style="display: none;">Cancel Deployment</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="infoModal" class="modal">
+		<div class="modal-dialog modal-lg fadeDown in" role="dialog" aria-hidden="true">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title">Information</h3>
+				</div>
+				<div class="modal-body">
+					<div>
+						<p id="info-content" align="left"></p>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" type="button" data-dismiss="modal">CLOSE</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
